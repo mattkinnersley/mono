@@ -71,6 +71,10 @@ type TypeNameToTypeMap = {
   json: any;
 };
 
+export type TableSchemaToRow<T extends TableSchema> = {
+  [K in keyof T['columns']]: SchemaValueToTSType<T['columns'][K]>;
+};
+
 export type ColumnTypeName<T extends SchemaValue | ValueType> =
   T extends SchemaValue ? T['type'] : T;
 

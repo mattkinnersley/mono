@@ -1,21 +1,23 @@
 import {expect, test} from 'vitest';
 import {createSchema} from './schema.js';
-import {createTableSchema, type TableSchema} from './table-schema.js';
+import {type TableSchema} from './table-schema.js';
 import {definePermissions} from './permissions.js';
 import type {ExpressionBuilder} from '../../zql/src/query/expression.js';
+import {table, column} from './table-builder.js';
 
-const userSchema = createTableSchema({
-  tableName: 'user',
-  columns: {
-    id: {type: 'string'},
-    login: {type: 'string'},
-    name: {type: 'string'},
-    avatar: {type: 'string'},
-    role: {type: 'string'},
-  },
-  primaryKey: ['id'],
-  relationships: {},
-});
+const {string} = column;
+
+const userSchema = table('user')
+  .columns({
+    id: string(),
+    login: string(),
+    name: string(),
+    avatar: string(),
+    role: string(),
+  })
+  .primaryKey('id')
+  .build();
+
 const schema = createSchema({
   version: 1,
   tables: {

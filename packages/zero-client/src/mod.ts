@@ -68,6 +68,7 @@ export {
   createTableSchema,
   type TableSchema,
 } from '../../zero-schema/src/table-schema.js';
+export {table} from '../../zero-schema/src/table-builder.js';
 export {escapeLike} from '../../zql/src/query/escape-like.js';
 export type {
   ExpressionBuilder,
