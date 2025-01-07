@@ -35,6 +35,22 @@ export type TableSchema = {
   readonly primaryKey: PrimaryKey | string;
 };
 
+export type TableSchema2 = {
+  readonly name: string;
+  readonly columns: Record<string, SchemaValue | ValueType>;
+  readonly primaryKey: PrimaryKey | string;
+};
+
+export type RelationshipsSchema = {
+  readonly table: string;
+  readonly relationships: {readonly [name: string]: Relationship2};
+};
+
+export type FullSchema = {
+  readonly allTables: {readonly [table: string]: TableSchema2};
+  readonly allRelationships: {readonly [table: string]: RelationshipsSchema};
+};
+
 export function createTableSchema<const T extends TableSchema>(schema: T) {
   return schema as T;
 }
@@ -100,6 +116,15 @@ export type Supertype<TSchemas extends TableSchema[]> = {
 type Lazy<T> = T | (() => T);
 
 export type Relationship = FieldRelationship | JunctionRelationship;
+type Connection = {
+  readonly sourceField: string;
+  readonly destField: string;
+  readonly destTable: string;
+};
+export type Relationship2 =
+  | readonly [Connection]
+  | readonly [Connection, Connection]
+  | readonly [Connection, Connection, Connection];
 
 export type AtLeastOne<T> = readonly [T, ...T[]];
 
