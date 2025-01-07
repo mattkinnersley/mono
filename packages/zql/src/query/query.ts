@@ -4,6 +4,7 @@ import type {Expand} from '../../../shared/src/expand.js';
 import type {ParameterReference} from './expression.js';
 import type {Row as IVMRow} from '../../../zero-protocol/src/data.js';
 import type {
+  FullSchema,
   PullSchemaForRelationship,
   SchemaValueToTSType,
   TableSchema,
@@ -132,19 +133,27 @@ export type Operator =
   | 'IS'
   | 'IS NOT';
 
-export type DefaultQueryResultRow<TSchema extends TableSchema> = {
-  row: Row<TSchema>;
+export type DefaultQueryResultRow<
+  TTable extends string,
+  TSchema extends FullSchema,
+> = {
+  row: Row<TSchema['allTables'][TTable]>;
   related: {};
   singular: false;
 };
 
 export interface Query<
-  TSchema extends TableSchema,
-  TReturn extends QueryType = DefaultQueryResultRow<TSchema>,
+  TTable extends string,
+  TSchema extends FullSchema,
+  TReturn extends QueryType = DefaultQueryResultRow<TTable, TSchema>,
 > {
-  related<TRelationship extends keyof TSchema['relationships']>(
+  related<
+    TRelationship extends
+      keyof TSchema['allRelationships'][TTable]['relationships'],
+  >(
     relationship: TRelationship,
   ): Query<
+    TTable,
     TSchema,
     AddSubselect<
       Query<

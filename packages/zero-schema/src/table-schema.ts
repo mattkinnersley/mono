@@ -28,11 +28,24 @@ type EnumSchemaValue<T> = {
   customType: T;
 };
 
+export type FullSchema = {
+  allTables: {
+    [tableName: string]: TableSchema;
+  };
+  allRelationships: {
+    [tableName: string]: RelationshipsSchema;
+  };
+};
+
 export type TableSchema = {
   readonly tableName: string;
   readonly columns: Record<string, SchemaValue | ValueType>;
-  readonly relationships?: {readonly [name: string]: Relationship} | undefined;
   readonly primaryKey: PrimaryKey | string;
+};
+
+export type RelationshipsSchema = {
+  readonly tableName: string;
+  readonly relationships: {readonly [name: string]: Relationship};
 };
 
 export function createTableSchema<const T extends TableSchema>(schema: T) {
@@ -79,18 +92,18 @@ export type SchemaValueToTSType<T extends SchemaValue | ValueType> =
     ? V
     : TypeNameToTypeMap[ColumnTypeName<T>];
 
-export type Supertype<TSchemas extends TableSchema[]> = {
-  tableName: TSchemas[number]['tableName'];
-  primaryKey: TSchemas[number]['primaryKey'];
-  columns: {
-    [K in keyof TSchemas[number]['columns']]: TSchemas[number]['columns'][K];
-  };
-  relationships?:
-    | {
-        [K in keyof TSchemas[number]['relationships']]: TSchemas[number]['relationships'][K];
-      }
-    | undefined;
-};
+// export type Supertype<TSchemas extends TableSchema[]> = {
+//   tableName: TSchemas[number]['tableName'];
+//   primaryKey: TSchemas[number]['primaryKey'];
+//   columns: {
+//     [K in keyof TSchemas[number]['columns']]: TSchemas[number]['columns'][K];
+//   };
+//   relationships?:
+//     | {
+//         [K in keyof TSchemas[number]['relationships']]: TSchemas[number]['relationships'][K];
+//       }
+//     | undefined;
+// };
 
 /**
  * A schema might have a relationship to itself.
@@ -176,7 +189,7 @@ export function assertJunctionRelationship(
  * relationship.
  */
 export type PullSchemaForRelationship<
-  TSchema extends TableSchema,
+  TSchema extends RelationshipsSchema,
   TRelationship extends keyof TSchema['relationships'],
 > = TSchema['relationships'][TRelationship] extends FieldRelationship<
   TableSchema,
