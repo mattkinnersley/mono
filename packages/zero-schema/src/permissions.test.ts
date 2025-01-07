@@ -3,7 +3,7 @@ import {createSchema} from './schema.js';
 import {type TableSchema} from './table-schema.js';
 import {definePermissions} from './permissions.js';
 import type {ExpressionBuilder} from '../../zql/src/query/expression.js';
-import {table, column} from './table-builder.js';
+import {table, column} from './builder/table-builder.js';
 
 const {string} = column;
 

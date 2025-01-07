@@ -1,21 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type {TableSchema2} from '../../../zero-schema/src/table-schema.js';
+import type {
+  LastInTuple,
+  TableSchema2,
+} from '../../../zero-schema/src/table-schema.js';
 import type {
   FullSchema,
-  Relationship2,
   SchemaValueToTSType,
 } from '../../../zero-schema/src/table-schema.js';
 import type {ExpressionFactory, ParameterReference} from './expression2.js';
 import type {Operator} from './query.js';
 import type {TypedView} from './typed-view.js';
-
-type LastInTuple<T extends Relationship2> = T extends readonly [infer L]
-  ? L
-  : T extends readonly [unknown, infer L]
-  ? L
-  : T extends readonly [unknown, unknown, infer L]
-  ? L
-  : never;
 
 type Selector<E extends TableSchema2> = keyof E['columns'];
 export type NoJsonSelector<T extends TableSchema2> = Exclude<
@@ -42,15 +36,15 @@ export type GetFieldTypeNoUndefined<
 export type AvailableRelationships<
   TTable extends string,
   TSchema extends FullSchema,
-> = keyof TSchema['allRelationships'][TTable]['relationships'] & string;
+> = keyof TSchema['allRelationships'][TTable] & string;
 
 export type DestTableName<
   TTable extends string,
   TSchema extends FullSchema,
   TRelationship extends string,
 > = LastInTuple<
-  TSchema['allRelationships'][TTable]['relationships'][TRelationship]
->['destTable'];
+  TSchema['allRelationships'][TTable][TRelationship]
+>['destSchema']['name'];
 
 type DestRow<
   TTable extends string,

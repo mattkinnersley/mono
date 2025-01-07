@@ -42,8 +42,7 @@ export type TableSchema2 = {
 };
 
 export type RelationshipsSchema = {
-  readonly table: string;
-  readonly relationships: {readonly [name: string]: Relationship2};
+  readonly [name: string]: Relationship2;
 };
 
 export type FullSchema = {
@@ -123,12 +122,20 @@ export type Relationship = FieldRelationship | JunctionRelationship;
 type Connection = {
   readonly sourceField: string;
   readonly destField: string;
-  readonly destTable: string;
+  readonly destSchema: TableSchema2;
 };
 export type Relationship2 =
   | readonly [Connection]
   | readonly [Connection, Connection]
   | readonly [Connection, Connection, Connection];
+
+export type LastInTuple<T extends Relationship2> = T extends readonly [infer L]
+  ? L
+  : T extends readonly [unknown, infer L]
+  ? L
+  : T extends readonly [unknown, unknown, infer L]
+  ? L
+  : never;
 
 export type AtLeastOne<T> = readonly [T, ...T[]];
 
