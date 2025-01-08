@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type {TableSchema2} from '../../../zero-schema/src/table-schema.js';
 import type {
   FullSchema,
   Relationship2,
   SchemaValueToTSType,
 } from '../../../zero-schema/src/table-schema.js';
+import type {ExpressionFactory, ParameterReference} from './expression2.js';
+import type {Operator} from './query.js';
+import type {TypedView} from './typed-view.js';
 
 type LastInTuple<T extends Relationship2> = T extends readonly [infer L]
   ? L
@@ -13,12 +17,34 @@ type LastInTuple<T extends Relationship2> = T extends readonly [infer L]
   ? L
   : never;
 
-type AvailableRelationships<
+type Selector<E extends TableSchema2> = keyof E['columns'];
+export type NoJsonSelector<T extends TableSchema2> = Exclude<
+  Selector<T>,
+  JsonSelectors<T>
+>;
+type JsonSelectors<E extends TableSchema2> = {
+  [K in keyof E['columns']]: E['columns'][K] extends {type: 'json'} ? K : never;
+}[keyof E['columns']];
+
+export type GetFieldTypeNoUndefined<
+  TSchema extends TableSchema2,
+  TColumn extends keyof TSchema['columns'],
+  TOperator extends Operator,
+> = TOperator extends 'IN' | 'NOT IN'
+  ? Exclude<
+      SchemaValueToTSType<TSchema['columns'][TColumn]>,
+      null | undefined
+    >[]
+  : TOperator extends 'IS' | 'IS NOT'
+  ? Exclude<SchemaValueToTSType<TSchema['columns'][TColumn]>, undefined> | null
+  : Exclude<SchemaValueToTSType<TSchema['columns'][TColumn]>, undefined>;
+
+export type AvailableRelationships<
   TTable extends string,
   TSchema extends FullSchema,
-> = TSchema['allRelationships'][TTable]['relationships'];
+> = keyof TSchema['allRelationships'][TTable]['relationships'] & string;
 
-type DestTableName<
+export type DestTableName<
   TTable extends string,
   TSchema extends FullSchema,
   TRelationship extends string,
@@ -40,7 +66,7 @@ type AddSubreturn<
   [K in TAs]: TSubselectReturn;
 };
 
-type PullTableSchema<
+export type PullTableSchema<
   TTable extends string,
   TSchemas extends FullSchema,
 > = TSchemas['allTables'][TTable];
@@ -62,10 +88,7 @@ export interface Query<
   TSchema extends FullSchema,
   TReturn = Row<TTable, TSchema>,
 > {
-  related<
-    TRelationship extends keyof AvailableRelationships<TTable, TSchema> &
-      string,
-  >(
+  related<TRelationship extends AvailableRelationships<TTable, TSchema>>(
     relationship: TRelationship,
   ): Query<
     TTable,
@@ -77,8 +100,7 @@ export interface Query<
     >
   >;
   related<
-    TRelationship extends keyof AvailableRelationships<TTable, TSchema> &
-      string,
+    TRelationship extends AvailableRelationships<TTable, TSchema>,
     TSub extends Query<string, TSchema>,
   >(
     relationship: TRelationship,
@@ -97,5 +119,54 @@ export interface Query<
     >
   >;
 
-  run(): HumanReadable<TReturn>;
+  where<
+    TSelector extends NoJsonSelector<PullTableSchema<TTable, TSchema>>,
+    TOperator extends Operator,
+  >(
+    field: TSelector,
+    op: TOperator,
+    value:
+      | GetFieldTypeNoUndefined<
+          PullTableSchema<TTable, TSchema>,
+          TSelector,
+          TOperator
+        >
+      | ParameterReference,
+  ): Query<TTable, TSchema, TReturn>;
+  where<TSelector extends NoJsonSelector<PullTableSchema<TTable, TSchema>>>(
+    field: TSelector,
+    value:
+      | GetFieldTypeNoUndefined<
+          PullTableSchema<TTable, TSchema>,
+          TSelector,
+          '='
+        >
+      | ParameterReference,
+  ): Query<TTable, TSchema, TReturn>;
+  where(
+    expressionFactory: ExpressionFactory<TTable, TSchema>,
+  ): Query<TTable, TSchema, TReturn>;
+
+  start(
+    row: Partial<Row<TTable, TSchema>>,
+    opts?: {inclusive: boolean} | undefined,
+  ): Query<TTable, TSchema, TReturn>;
+
+  limit(limit: number): Query<TTable, TSchema, TReturn>;
+
+  orderBy<TSelector extends Selector<PullTableSchema<TTable, TSchema>>>(
+    field: TSelector,
+    direction: 'asc' | 'desc',
+  ): Query<TTable, TSchema, TReturn>;
+
+  one(): Query<TTable, TSchema, TReturn | undefined>;
+
+  materialize(): TypedView<TReturn extends undefined ? TReturn : TReturn[]>;
+
+  run(): HumanReadable<TReturn extends undefined ? TReturn : TReturn[]>;
+
+  preload(): {
+    cleanup: () => void;
+    complete: Promise<void>;
+  };
 }
