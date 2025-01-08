@@ -57,7 +57,7 @@ import type {TableBuilderWithColumns} from './table-builder.js';
 
 export function relationships<
   TSource extends TableSchema2,
-  TRelationships extends Record<string, RelationshipBuilder<any>>,
+  TRelationships extends Record<string, Relationship2>,
 >(
   // eslint-disable-next-line @typescript-eslint/naming-convention
   table: TableBuilderWithColumns<TSource>,
@@ -70,15 +70,13 @@ export function relationships<
       sourceField: TSourceField,
       destField: TDestField,
       destSchema: TableBuilderWithColumns<TDest>,
-    ) => RelationshipBuilder<
-      [
-        {
-          sourceField: TSourceField;
-          destField: TDestField;
-          destSchema: TDest;
-        },
-      ]
-    >,
+    ) => readonly [
+      {
+        sourceField: TSourceField;
+        destField: TDestField;
+        destSchema: TDest;
+      },
+    ],
   ) => TRelationships,
 ): TRelationships {
   return cb(connect);
@@ -93,44 +91,13 @@ function connect(
   destField: any,
   destSchema: TableBuilderWithColumns<any>,
 ) {
-  return new RelationshipBuilder([
+  return [
     {
       sourceField,
       destField,
       destSchema: destSchema.build(),
     },
-  ]);
-}
-
-class RelationshipBuilder<TShape extends Relationship2> {
-  readonly #schema: TShape;
-
-  constructor(schema: TShape) {
-    this.#schema = schema;
-  }
-
-  connect<
-    TDest extends TableSchema2,
-    TSourceField extends keyof GetDestSchema<TShape>['columns'] & string,
-    TDestField extends keyof TDest['columns'] & string,
-  >(sourceField: TSourceField, destField: TDestField, destSchema: TDest) {
-    return new RelationshipBuilder([
-      ...this.#schema,
-      {
-        sourceField,
-        destField,
-        destSchema,
-      },
-    ] as any);
-  }
-
-  get schema(): TShape {
-    return this.#schema;
-  }
-
-  build(): TShape {
-    return this.#schema;
-  }
+  ] as const;
 }
 
 type GetDestSchema<TShape extends Relationship2> =

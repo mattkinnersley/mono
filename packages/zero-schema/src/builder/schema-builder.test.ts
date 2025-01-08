@@ -20,7 +20,7 @@ test('building a schema', () => {
     recruiter: connect('id', 'recruiterId', user),
   }));
 
-  const schema = createSchema({user, userRelationships});
+  // const schema = createSchema({user, userRelationships});
 
   const schema = {
     allTables: {
@@ -28,7 +28,7 @@ test('building a schema', () => {
     },
     allRelationships: {
       user: {
-        recruiter: userRelationships.recruiter.build(),
+        recruiter: userRelationships.recruiter,
       },
     },
   } as const;
