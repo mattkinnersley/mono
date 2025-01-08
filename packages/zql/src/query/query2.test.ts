@@ -2,30 +2,28 @@ import {test} from 'vitest';
 import type {Query} from './query2.js';
 
 test('types', () => {
+  const user = {
+    name: 'user',
+    columns: {
+      id: {type: 'number'},
+      name: {type: 'string'},
+      recruiterId: {type: 'number'},
+    },
+    primaryKey: 'id',
+  } as const;
   const schemas = {
     allTables: {
-      user: {
-        name: 'user',
-        columns: {
-          id: {type: 'number'},
-          name: {type: 'string'},
-          recruiterId: {type: 'number'},
-        },
-        primaryKey: 'id',
-      },
+      user,
     },
     allRelationships: {
       user: {
-        table: 'user',
-        relationships: {
-          recruiter: [
-            {
-              sourceField: 'recruiterId',
-              destField: 'id',
-              destTable: 'user',
-            },
-          ],
-        },
+        recruiter: [
+          {
+            sourceField: 'recruiterId',
+            destField: 'id',
+            destSchema: user,
+          },
+        ],
       },
     },
   } as const;

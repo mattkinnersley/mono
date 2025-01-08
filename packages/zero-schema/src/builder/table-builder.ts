@@ -55,7 +55,7 @@ export class TableBuilder<TShape extends TableSchema2> {
   }
 }
 
-class TableBuilderWithColumns<TShape extends TableSchema2> {
+export class TableBuilderWithColumns<TShape extends TableSchema2> {
   readonly #schema: TShape;
 
   constructor(schema: TShape) {
