@@ -68,11 +68,31 @@ export interface Query<
   >(
     relationship: TRelationship,
   ): Query<
-    DestTableName<TTable, TSchema, TRelationship>,
+    TTable,
     TSchema,
     AddSubreturn<
       TReturn,
       readonly DestRow<TTable, TSchema, TRelationship>[],
+      TRelationship
+    >
+  >;
+  related<
+    TRelationship extends keyof AvailableRelationships<TTable, TSchema> &
+      string,
+    TSub extends Query<string, TSchema>,
+  >(
+    relationship: TRelationship,
+    cb: (
+      q: Query<DestTableName<TTable, TSchema, TRelationship>, TSchema>,
+    ) => TSub,
+  ): Query<
+    TTable,
+    TSchema,
+    AddSubreturn<
+      TReturn,
+      TSub extends Query<string, TSchema, infer TSubReturn>
+        ? TSubReturn[]
+        : never,
       TRelationship
     >
   >;

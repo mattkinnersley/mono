@@ -30,8 +30,11 @@ test('types', () => {
     },
   } as const;
   const q = {} as Query<'user', typeof schemas>;
-  const q2 = q.related('recruiter').related('recruiter');
+  const q2 = q.related('recruiter');
   const d = q2.run();
+
+  const q3 = q.related('recruiter', q => q.related('recruiter'));
+  const d2 = q3.run();
 
   // q.related('')
 });
