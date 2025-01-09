@@ -8,7 +8,6 @@ import {newQuery, type QueryDelegate} from '../../zql/src/query/query-impl.js';
 import {schemas} from '../../zql/src/query/test/testSchemas.js';
 import {Database} from './db.js';
 import {TableSource, toSQLiteTypeName} from './table-source.js';
-import type {Row} from '../../zql/src/query/query.js';
 
 let queryDelegate: QueryDelegate;
 beforeEach(() => {
