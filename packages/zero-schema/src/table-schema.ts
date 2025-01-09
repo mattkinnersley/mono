@@ -1,4 +1,3 @@
-import {assert} from '../../shared/src/asserts.js';
 import type {PrimaryKey} from '../../zero-protocol/src/primary-key.js';
 
 export type ValueType = 'string' | 'number' | 'boolean' | 'null' | 'json';
@@ -29,30 +28,19 @@ type EnumSchemaValue<T> = {
 };
 
 export type TableSchema = {
-  readonly tableName: string;
-  readonly columns: Record<string, SchemaValue | ValueType>;
-  readonly relationships?: {readonly [name: string]: Relationship} | undefined;
-  readonly primaryKey: PrimaryKey | string;
-};
-
-export type TableSchema2 = {
   readonly name: string;
   readonly columns: Record<string, SchemaValue | ValueType>;
   readonly primaryKey: PrimaryKey | string;
 };
 
 export type RelationshipsSchema = {
-  readonly [name: string]: Relationship2;
+  readonly [name: string]: Relationship;
 };
 
 export type FullSchema = {
-  readonly allTables: {readonly [table: string]: TableSchema2};
-  readonly allRelationships: {readonly [table: string]: RelationshipsSchema};
+  readonly tables: {readonly [table: string]: TableSchema};
+  readonly relationships: {readonly [table: string]: RelationshipsSchema};
 };
-
-export function createTableSchema<const T extends TableSchema>(schema: T) {
-  return schema as T;
-}
 
 type TypeNameToTypeMap = {
   string: string;
@@ -68,10 +56,6 @@ type TypeNameToTypeMap = {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   json: any;
-};
-
-export type TableSchemaToRow<T extends TableSchema> = {
-  [K in keyof T['columns']]: SchemaValueToTSType<T['columns'][K]>;
 };
 
 export type ColumnTypeName<T extends SchemaValue | ValueType> =
@@ -98,38 +82,17 @@ export type SchemaValueToTSType<T extends SchemaValue | ValueType> =
     ? V
     : TypeNameToTypeMap[ColumnTypeName<T>];
 
-export type Supertype<TSchemas extends TableSchema[]> = {
-  tableName: TSchemas[number]['tableName'];
-  primaryKey: TSchemas[number]['primaryKey'];
-  columns: {
-    [K in keyof TSchemas[number]['columns']]: TSchemas[number]['columns'][K];
-  };
-  relationships?:
-    | {
-        [K in keyof TSchemas[number]['relationships']]: TSchemas[number]['relationships'][K];
-      }
-    | undefined;
-};
-
-/**
- * A schema might have a relationship to itself.
- * Given we cannot reference a variable in the same statement we initialize
- * the variable, we allow use of a function to get around this.
- */
-type Lazy<T> = T | (() => T);
-
-export type Relationship = FieldRelationship | JunctionRelationship;
 type Connection = {
   readonly sourceField: string;
   readonly destField: string;
-  readonly destSchema: TableSchema2;
+  readonly destSchema: TableSchema;
 };
-export type Relationship2 =
+export type Relationship =
   | readonly [Connection]
   | readonly [Connection, Connection]
   | readonly [Connection, Connection, Connection];
 
-export type LastInTuple<T extends Relationship2> = T extends readonly [infer L]
+export type LastInTuple<T extends Relationship> = T extends readonly [infer L]
   ? L
   : T extends readonly [unknown, infer L]
   ? L
@@ -145,84 +108,3 @@ export function atLeastOne<T>(arr: readonly T[]): AtLeastOne<T> {
   }
   return arr as AtLeastOne<T>;
 }
-
-type FieldName<TSchema extends TableSchema> =
-  | (keyof TSchema['columns'] & string)
-  | AtLeastOne<keyof TSchema['columns'] & string>;
-
-/**
- * A relationship between two entities where
- * that relationship is defined via fields on both entities.
- */
-export type FieldRelationship<
-  TSourceSchema extends TableSchema = TableSchema,
-  TDestSchema extends TableSchema = TableSchema,
-> = {
-  sourceField: FieldName<TSourceSchema>;
-  destField: FieldName<TDestSchema>;
-  destSchema: Lazy<TDestSchema>;
-};
-
-/**
- * A relationship between two entities where
- * that relationship is defined via a junction table.
- */
-export type JunctionRelationship<
-  TSourceSchema extends TableSchema = TableSchema,
-  TJunctionSchema extends TableSchema = TableSchema,
-  TDestSchema extends TableSchema = TableSchema,
-> = readonly [
-  FieldRelationship<TSourceSchema, TJunctionSchema>,
-  FieldRelationship<TJunctionSchema, TDestSchema>,
-];
-
-export function isFieldRelationship(
-  relationship: Relationship,
-): relationship is FieldRelationship {
-  return !isJunctionRelationship(relationship);
-}
-
-export function assertFieldRelationship(
-  relationship: Relationship,
-): asserts relationship is FieldRelationship {
-  assert(isFieldRelationship(relationship), 'Expected field relationship');
-}
-
-export function isJunctionRelationship(
-  relationship: Relationship,
-): relationship is JunctionRelationship {
-  return Array.isArray(relationship);
-}
-
-export function assertJunctionRelationship(
-  relationship: Relationship,
-): asserts relationship is JunctionRelationship {
-  assert(
-    isJunctionRelationship(relationship),
-    'Expected junction relationship',
-  );
-}
-
-/**
- * Calling `related` on `Query` returns a new Query
- * since `related` moves through the relationship. This function takes
- * 1. A schema
- * 2. A relationship name
- * and returns the schema of the entity at the other end of the
- * relationship.
- */
-export type PullSchemaForRelationship<
-  TSchema extends TableSchema,
-  TRelationship extends keyof TSchema['relationships'],
-> = TSchema['relationships'][TRelationship] extends FieldRelationship<
-  TableSchema,
-  infer TSchema
->
-  ? TSchema
-  : TSchema['relationships'][TRelationship] extends JunctionRelationship<
-      TableSchema,
-      TableSchema,
-      infer TSchema
-    >
-  ? TSchema
-  : never;

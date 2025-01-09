@@ -1,20 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {must} from '../../../shared/src/must.js';
-import type {Condition, LiteralValue} from '../../../zero-protocol/src/ast.js';
+import {
+  toStaticParam,
+  type Condition,
+  type LiteralValue,
+  type Parameter,
+} from '../../../zero-protocol/src/ast.js';
+import type {FullSchema} from '../../../zero-schema/src/table-schema.js';
+import type {Operator} from './query.js';
 import type {
-  PullSchemaForRelationship,
-  TableSchema,
-} from '../../../zero-schema/src/table-schema.js';
-import type {
-  DefaultQueryResultRow,
+  AvailableRelationships,
+  DestTableName,
   GetFieldTypeNoUndefined,
   NoJsonSelector,
-  Operator,
+  PullTableSchema,
   Query,
-  QueryType,
 } from './query.js';
-
-import {type Parameter, toStaticParam} from '../../../zero-protocol/src/ast.js';
 
 export type ParameterReference = {
   [toStaticParam](): Parameter;
@@ -36,24 +37,26 @@ export type ParameterReference = {
  * const query = z.query.user.where(condition);
  * ```
  */
-export interface ExpressionFactory<TSchema extends TableSchema> {
-  (eb: ExpressionBuilder<TSchema>): Condition;
+export interface ExpressionFactory<
+  TTable extends string,
+  TSchema extends FullSchema,
+> {
+  (eb: ExpressionBuilder<TTable, TSchema>): Condition;
 }
 
-export class ExpressionBuilder<TSchema extends TableSchema> {
+export class ExpressionBuilder<
+  TTable extends string,
+  TSchema extends FullSchema,
+> {
   readonly #exists: (
     relationship: string,
-    cb?: (
-      query: Query<TableSchema, QueryType>,
-    ) => Query<TableSchema, QueryType>,
+    cb?: (query: Query<TTable, TSchema>) => Query<TTable, TSchema>,
   ) => Condition;
 
   constructor(
     exists: (
       relationship: string,
-      cb?: (
-        query: Query<TableSchema, QueryType>,
-      ) => Query<TableSchema, QueryType>,
+      cb?: (query: Query<TTable, TSchema>) => Query<TTable, TSchema>,
     ) => Condition,
   ) {
     this.#exists = exists;
@@ -64,17 +67,28 @@ export class ExpressionBuilder<TSchema extends TableSchema> {
     return this;
   }
 
-  cmp<TSelector extends NoJsonSelector<TSchema>, TOperator extends Operator>(
+  cmp<
+    TSelector extends NoJsonSelector<PullTableSchema<TTable, TSchema>>,
+    TOperator extends Operator,
+  >(
     field: TSelector,
     op: TOperator,
     value:
-      | GetFieldTypeNoUndefined<TSchema, TSelector, TOperator>
+      | GetFieldTypeNoUndefined<
+          PullTableSchema<TTable, TSchema>,
+          TSelector,
+          TOperator
+        >
       | ParameterReference,
   ): Condition;
-  cmp<TSelector extends NoJsonSelector<TSchema>>(
+  cmp<TSelector extends NoJsonSelector<PullTableSchema<TTable, TSchema>>>(
     field: TSelector,
     value:
-      | GetFieldTypeNoUndefined<TSchema, TSelector, '='>
+      | GetFieldTypeNoUndefined<
+          PullTableSchema<TTable, TSchema>,
+          TSelector,
+          '='
+        >
       | ParameterReference,
   ): Condition;
   cmp(
@@ -106,28 +120,20 @@ export class ExpressionBuilder<TSchema extends TableSchema> {
   or = or;
   not = not;
 
-  exists(relationship: RelationshipName<TSchema>): Condition;
-  exists<TRelationship extends RelationshipName<TSchema>>(
+  exists(relationship: AvailableRelationships<TTable, TSchema>): Condition;
+  exists<TRelationship extends AvailableRelationships<TTable, TSchema>>(
     relationship: TRelationship,
     cb: (
-      query: Query<
-        PullSchemaForRelationship<TSchema, TRelationship>,
-        DefaultQueryResultRow<PullSchemaForRelationship<TSchema, TRelationship>>
-      >,
-    ) => Query<TableSchema, QueryType>,
+      query: Query<DestTableName<TTable, TSchema, TRelationship>, TSchema>,
+    ) => Query<TTable, TSchema>,
   ): Condition;
   exists(
     relationship: string,
-    cb?: (
-      query: Query<TableSchema, QueryType>,
-    ) => Query<TableSchema, QueryType>,
+    cb?: (query: Query<TTable, TSchema>) => Query<TTable, TSchema>,
   ): Condition {
     return this.#exists(relationship, cb);
   }
 }
-
-export type RelationshipName<TSchema extends TableSchema> =
-  keyof TSchema['relationships'] & string;
 
 export function and(...conditions: (Condition | undefined)[]): Condition {
   const expressions = filterTrue(filterUndefined(conditions));

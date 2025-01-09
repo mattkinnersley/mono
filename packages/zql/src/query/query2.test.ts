@@ -1,5 +1,5 @@
 import {test} from 'vitest';
-import type {Query} from './query2.js';
+import type {Query} from './query.js';
 
 test('types', () => {
   const user = {

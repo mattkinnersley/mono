@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type {TableSchema2} from '../table-schema.js';
+import type {TableSchema} from '../table-schema.js';
 import type {Relationships} from './relationship-builder.js';
 import type {TableBuilderWithColumns} from './table-builder.js';
 
 export function createSchema<
-  TTables extends Record<string, TableBuilderWithColumns<TableSchema2>>,
+  TTables extends Record<string, TableBuilderWithColumns<TableSchema>>,
   TRelationships extends Record<string, Relationships>,
 >(
   tables: TTables,

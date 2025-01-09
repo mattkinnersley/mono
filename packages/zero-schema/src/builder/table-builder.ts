@@ -1,4 +1,4 @@
-import type {SchemaValue, TableSchema2} from '../table-schema.js';
+import type {SchemaValue, TableSchema} from '../table-schema.js';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function table<TName extends string>(name: TName) {
@@ -32,7 +32,7 @@ export const column = {
   json,
 };
 
-export class TableBuilder<TShape extends TableSchema2> {
+export class TableBuilder<TShape extends TableSchema> {
   readonly #schema: TShape;
   constructor(schema: TShape) {
     this.#schema = schema;
@@ -55,7 +55,7 @@ export class TableBuilder<TShape extends TableSchema2> {
   }
 }
 
-export class TableBuilderWithColumns<TShape extends TableSchema2> {
+export class TableBuilderWithColumns<TShape extends TableSchema> {
   readonly #schema: TShape;
 
   constructor(schema: TShape) {

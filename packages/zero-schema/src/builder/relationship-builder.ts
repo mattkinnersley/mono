@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type {Relationship2, TableSchema2} from '../table-schema.js';
+import type {Relationship, TableSchema} from '../table-schema.js';
 import type {TableBuilderWithColumns} from './table-builder.js';
 
-type ConnectArg<TSourceField, TDestField, TDest extends TableSchema2> = {
+type ConnectArg<TSourceField, TDestField, TDest extends TableSchema> = {
   sourceField: TSourceField;
   destField: TDestField;
   destSchema: TableBuilderWithColumns<TDest>;
 };
 
-type ConnectResult<TSourceField, TDestField, TDest extends TableSchema2> = {
+type ConnectResult<TSourceField, TDestField, TDest extends TableSchema> = {
   sourceField: TSourceField;
   destField: TDestField;
   destSchema: TDest;
@@ -16,24 +16,24 @@ type ConnectResult<TSourceField, TDestField, TDest extends TableSchema2> = {
 
 type Prev = [-1, 0, 1, 2, 3, 4, 5, 6];
 export type PreviousSchema<
-  TSource extends TableSchema2,
+  TSource extends TableSchema,
   K extends number,
-  TDests extends TableSchema2[],
+  TDests extends TableSchema[],
 > = K extends 0 ? TSource : TDests[Prev[K]];
 
 export type Relationships = {
   name: string;
-  relationships: Record<string, Relationship2>;
+  relationships: Record<string, Relationship>;
 };
 
 export function relationships<
-  TSource extends TableSchema2,
-  TRelationships extends Record<string, Relationship2>,
+  TSource extends TableSchema,
+  TRelationships extends Record<string, Relationship>,
 >(
   table: TableBuilderWithColumns<TSource>,
   cb: (
     many: <
-      TDests extends TableSchema2[],
+      TDests extends TableSchema[],
       TSourceFields extends {
         [K in keyof TDests]: keyof PreviousSchema<
           TSource,
