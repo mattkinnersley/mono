@@ -71,6 +71,10 @@ export class TableBuilderWithColumns<TShape extends TableSchema2> {
     });
   }
 
+  get schema() {
+    return this.#schema;
+  }
+
   build() {
     return this.#schema;
   }

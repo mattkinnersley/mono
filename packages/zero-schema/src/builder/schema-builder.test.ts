@@ -16,8 +16,54 @@ test('building a schema', () => {
     })
     .primaryKey('id');
 
-  const userRelationships = relationships(user, connect => ({
-    recruiter: connect('id', 'recruiterId', user),
+  const issue = table('issue')
+    .columns({
+      id: string(),
+      title: string(),
+      ownerId: number(),
+    })
+    .primaryKey('id');
+
+  const issueLabel = table('issueLabel')
+    .columns({
+      issueId: number(),
+      labelId: number(),
+    })
+    .primaryKey('issueId', 'labelId');
+
+  const label = table('label')
+    .columns({
+      id: number(),
+      name: string(),
+    })
+    .primaryKey('id');
+
+  const issueRelationships = relationships(issue, many => ({
+    owner: many({
+      sourceField: 'id',
+      destField: 'ownerId',
+      destSchema: user,
+    }),
+    labels: many(
+      {
+        sourceField: 'id',
+        destField: 'issueId',
+        destSchema: issueLabel,
+      },
+      {
+        sourceField: 'labelId',
+        destField: 'id',
+        destSchema: label,
+      },
+    ),
+  }));
+
+  const userRelationships = relationships(user, many => ({
+    recruiter: many({
+      sourceField: 'id',
+      destField: 'recruiterId',
+      destSchema: user,
+    }),
   }));
 
   // const schema = createSchema({user, userRelationships});
@@ -25,14 +71,24 @@ test('building a schema', () => {
   const schema = {
     allTables: {
       user: user.build(),
+      issue: issue.build(),
+      issueLabel: issueLabel.build(),
+      label: label.build(),
     },
     allRelationships: {
       user: {
         recruiter: userRelationships.recruiter,
       },
+      issue: {
+        owner: issueRelationships.owner,
+        labels: issueRelationships.labels,
+      },
     },
   } as const;
 
   const q = {} as Query<'user', typeof schema>;
+  const iq = {} as Query<'issue', typeof schema>;
   const r = q.related('recruiter', q => q.related('recruiter')).run();
+
+  const id = iq.related('labels').run();
 });
