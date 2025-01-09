@@ -67,11 +67,27 @@ test('building a schema', () => {
     }),
   }));
 
+  const labelRelationships = relationships(label, many => ({
+    issues: many(
+      {
+        sourceField: 'id',
+        destField: 'labelId',
+        destSchema: issueLabel,
+      },
+      {
+        sourceField: 'issueId',
+        destField: 'id',
+        destSchema: issue,
+      },
+    ),
+  }));
+
   const schema = createSchema(
     {user, issue, issueLabel, label},
     {
       userRelationships,
       issueRelationships,
+      labelRelationships,
     },
   );
 
@@ -80,4 +96,7 @@ test('building a schema', () => {
   const r = q.related('recruiter', q => q.related('recruiter')).run();
 
   const id = iq.related('labels').run();
+
+  const lq = {} as Query<'label', typeof schema>;
+  const ld = lq.related('issues').run();
 });
