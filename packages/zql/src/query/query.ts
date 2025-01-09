@@ -70,7 +70,7 @@ type AddSubreturn<
   TSubselectReturn,
   TAs extends string,
 > = TExistingReturn & {
-  [K in TAs]: TSubselectReturn;
+  readonly [K in TAs]: TSubselectReturn;
 };
 
 export type PullTableSchema<
@@ -79,7 +79,10 @@ export type PullTableSchema<
 > = TSchemas['tables'][TTable];
 
 type Row<TTable extends string, TSchema extends FullSchema> = {
-  [K in keyof PullTableSchema<TTable, TSchema>['columns']]: SchemaValueToTSType<
+  readonly [K in keyof PullTableSchema<
+    TTable,
+    TSchema
+  >['columns']]: SchemaValueToTSType<
     PullTableSchema<TTable, TSchema>['columns'][K]
   >;
 };
@@ -152,6 +155,16 @@ export interface Query<
   ): Query<TTable, TSchema, TReturn>;
   where(
     expressionFactory: ExpressionFactory<TTable, TSchema>,
+  ): Query<TTable, TSchema, TReturn>;
+
+  whereExists(
+    relationship: AvailableRelationships<TTable, TSchema>,
+  ): Query<TTable, TSchema, TReturn>;
+  whereExists<TRelationship extends AvailableRelationships<TTable, TSchema>>(
+    relationship: TRelationship,
+    cb: (
+      q: Query<DestTableName<TTable, TSchema, TRelationship>, TSchema>,
+    ) => Query<string, TSchema>,
   ): Query<TTable, TSchema, TReturn>;
 
   start(

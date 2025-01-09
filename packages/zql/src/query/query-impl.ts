@@ -19,6 +19,7 @@ import {
 import {
   isFieldRelationship,
   isJunctionRelationship,
+  type FullSchema,
   type PullSchemaForRelationship,
   type TableSchema,
 } from '../../../zero-schema/src/table-schema.js';
@@ -49,21 +50,25 @@ import type {
 import type {TypedView} from './typed-view.js';
 
 export function newQuery<
-  TSchema extends TableSchema,
-  TReturn extends QueryType = DefaultQueryResultRow<TSchema>,
->(delegate: QueryDelegate, tableSchema: TSchema): Query<TSchema, TReturn> {
-  return new QueryImpl(delegate, normalizeTableSchema(tableSchema));
+  TTable extends keyof FullSchema['tables'] & string,
+  TSchema extends FullSchema,
+>(
+  delegate: QueryDelegate,
+  table: TTable,
+  schema: TSchema,
+): Query<TTable, TSchema> {
+  return new QueryImpl(delegate, schema);
 }
 
 function newQueryWithDetails<
-  TSchema extends TableSchema,
-  TReturn extends QueryType,
+  TTable extends keyof FullSchema['tables'] & string,
+  TSchema extends FullSchema,
 >(
   delegate: QueryDelegate,
   schema: NormalizedTableSchema,
   ast: AST,
   format: Format | undefined,
-): Query<TSchema, TReturn> {
+): Query<TTable, TSchema> {
   return new QueryImpl(delegate, schema, ast, format);
 }
 

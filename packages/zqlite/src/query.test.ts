@@ -124,10 +124,10 @@ beforeEach(() => {
 });
 
 test('row type', () => {
-  const query = newQuery(queryDelegate, schemas.issue)
+  const query = newQuery(queryDelegate, 'issue', schema)
     .whereExists('labels', q => q.where('name', '=', 'bug'))
     .related('labels');
-  type RT = Row<typeof query>;
+  type RT = ReturnType<typeof query.run>[0];
   expectTypeOf<RT>().toEqualTypeOf<{
     readonly id: string;
     readonly title: string;
