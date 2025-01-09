@@ -9,20 +9,36 @@ export function table<TName extends string>(name: TName) {
   });
 }
 
-export function string() {
-  return new ColumnBuilder({type: 'string', optional: false});
+export function string<T extends string = string>() {
+  return new ColumnBuilder({
+    type: 'string',
+    optional: false,
+    customType: null as unknown as T,
+  });
 }
 
-export function number() {
-  return new ColumnBuilder({type: 'number', optional: false});
+export function number<T extends number = number>() {
+  return new ColumnBuilder({
+    type: 'number',
+    optional: false,
+    customType: null as unknown as T,
+  });
 }
 
-export function boolean() {
-  return new ColumnBuilder({type: 'boolean', optional: false});
+export function boolean<T extends boolean = boolean>() {
+  return new ColumnBuilder({
+    type: 'boolean',
+    optional: false,
+    customType: null as unknown as T,
+  });
 }
 
-export function json() {
-  return new ColumnBuilder({type: 'json', optional: false});
+export function json<T = any>() {
+  return new ColumnBuilder({
+    type: 'json',
+    optional: false,
+    customType: null as unknown as T,
+  });
 }
 
 export const column = {
@@ -80,7 +96,7 @@ export class TableBuilderWithColumns<TShape extends TableSchema> {
   }
 }
 
-class ColumnBuilder<TShape extends SchemaValue> {
+class ColumnBuilder<TShape extends SchemaValue<any>> {
   readonly #schema: TShape;
   constructor(schema: TShape) {
     this.#schema = schema;
