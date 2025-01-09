@@ -4,7 +4,7 @@
 
 import {test} from 'vitest';
 import {table, number, string} from './table-builder.js';
-import {relationships} from './relationship-builder.js';
+import {relationships, type PreviousSchema} from './relationship-builder.js';
 import type {Query} from '../../../zql/src/query/query2.js';
 
 test('building a schema', () => {
@@ -40,8 +40,8 @@ test('building a schema', () => {
 
   const issueRelationships = relationships(issue, many => ({
     owner: many({
-      sourceField: 'id',
-      destField: 'ownerId',
+      sourceField: 'ownerId',
+      destField: 'id',
       destSchema: user,
     }),
     labels: many(

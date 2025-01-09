@@ -51,11 +51,7 @@ import type {TableBuilderWithColumns} from './table-builder.js';
 
 // ====
 
-type ConnectArg<
-  TSourceField,
-  TDestField extends keyof TDest['columns'],
-  TDest extends TableSchema2,
-> = {
+type ConnectArg<TSourceField, TDestField, TDest extends TableSchema2> = {
   sourceField: TSourceField;
   destField: TDestField;
   destSchema: TableBuilderWithColumns<TDest>;
@@ -67,28 +63,50 @@ type ConnectResult<TSourceField, TDestField, TDest extends TableSchema2> = {
   destSchema: TDest;
 };
 
+type Prev = [-1, 0, 1, 2, 3, 4, 5, 6];
+export type PreviousSchema<
+  TSource extends TableSchema2,
+  K extends number,
+  TDests extends TableSchema2[],
+> = K extends 0 ? TSource : TDests[Prev[K]];
+
 export function relationships<
   TSource extends TableSchema2,
   TRelationships extends Record<string, Relationship2>,
 >(
   _table: TableBuilderWithColumns<TSource>,
   cb: (
-    many: <TArgs extends ConnectArg<any, any, any>[]>(
-      ...args: TArgs
+    many: <
+      TDests extends TableSchema2[],
+      TSourceFields extends {
+        [K in keyof TDests]: keyof PreviousSchema<
+          TSource,
+          K & number,
+          TDests
+        >['columns'] &
+          string;
+      },
+      TDestFields extends {
+        [K in keyof TDests]: keyof TDests[K]['columns'] & string;
+      },
+    >(
+      ...args: {
+        [K in keyof TDests]: ConnectArg<
+          TSourceFields[K],
+          TDestFields[K],
+          TDests[K]
+        >;
+      }
     ) => {
-      [K in keyof TArgs]: ConnectResult<
-        TArgs[K]['sourceField'],
-        TArgs[K]['destField'],
-        TArgs[K]['destSchema']['schema']
+      [K in keyof TDests]: ConnectResult<
+        TSourceFields[K],
+        TDestFields[K],
+        TDests[K]
       >;
     },
   ) => TRelationships,
 ): TRelationships {
   return cb(many as any);
-  // const relationshipSchemas = Object.fromEntries(
-  //   Object.entries(cb(connect)).map(([k, v]) => [k, v.schema]),
-  // ) as {[K in keyof TRelationships]: TRelationships[K]['schema']};
-  // return relationshipSchemas;
 }
 
 function many(
