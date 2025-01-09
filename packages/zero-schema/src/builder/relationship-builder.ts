@@ -2,55 +2,6 @@
 import type {Relationship2, TableSchema2} from '../table-schema.js';
 import type {TableBuilderWithColumns} from './table-builder.js';
 
-// export function relationships<TSource extends TableSchema2>(
-//   _table: TSource,
-// ): RelationshipsBuilder<Record<string, never>, TSource> {
-//   return new RelationshipsBuilder({});
-// }
-
-// interface RelationshipBuilder<TShape extends Relationship2> {
-
-// }
-
-// class RelationshipsBuilder<
-//   TShape extends RelationshipsSchema,
-//   TSource extends TableSchema2,
-// > {
-//   readonly #schema: TShape;
-
-//   constructor(schema: TShape) {
-//     this.#schema = schema;
-//   }
-
-//   one<TName extends string>(
-//     name: TName,
-//     connect: <TDest extends TableSchema2>(
-//       sourceField: keyof TSource['columns'] & string,
-//       destField: keyof TSource['columns'] & string,
-//       destSchema: TableBuilderWithColumns<TDest>,
-//     ) => RelationshipBuilder<>,
-//   ) {}
-
-//   many<TName extends string>(name: TName) {}
-
-//   // connect<TDest extends TableSchema2>(
-//   //   sourceField: keyof TSource['columns'],
-//   //   destField: keyof TDest['columns'],
-//   //   destSchema: TableBuilderWithColumns<TDest>,
-//   // ) {
-//   //   return new RelationshipsBuilder({
-//   //     ...this.#schema,
-//   //     [sourceField]: {
-//   //       sourceField,
-//   //       destField,
-//   //       destSchema: destSchema.build(),
-//   //     },
-//   //   } as any);
-//   // }
-// }
-
-// ====
-
 type ConnectArg<TSourceField, TDestField, TDest extends TableSchema2> = {
   sourceField: TSourceField;
   destField: TDestField;
@@ -70,11 +21,16 @@ export type PreviousSchema<
   TDests extends TableSchema2[],
 > = K extends 0 ? TSource : TDests[Prev[K]];
 
+export type Relationships = {
+  name: string;
+  relationships: Record<string, Relationship2>;
+};
+
 export function relationships<
   TSource extends TableSchema2,
   TRelationships extends Record<string, Relationship2>,
 >(
-  _table: TableBuilderWithColumns<TSource>,
+  table: TableBuilderWithColumns<TSource>,
   cb: (
     many: <
       TDests extends TableSchema2[],
@@ -105,8 +61,11 @@ export function relationships<
       >;
     },
   ) => TRelationships,
-): TRelationships {
-  return cb(many as any);
+): {name: TSource['name']; relationships: TRelationships} {
+  return {
+    name: table.build().name,
+    relationships: cb(many as any),
+  };
 }
 
 function many(

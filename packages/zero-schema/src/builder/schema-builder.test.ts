@@ -4,8 +4,9 @@
 
 import {test} from 'vitest';
 import {table, number, string} from './table-builder.js';
-import {relationships, type PreviousSchema} from './relationship-builder.js';
+import {relationships} from './relationship-builder.js';
 import type {Query} from '../../../zql/src/query/query2.js';
+import {createSchema} from './schema-builder.js';
 
 test('building a schema', () => {
   const user = table('user')
@@ -68,6 +69,15 @@ test('building a schema', () => {
 
   // const schema = createSchema({user, userRelationships});
 
+  const schema1 = createSchema(
+    user.build(),
+    issue.build(),
+    issueLabel.build(),
+    label.build(),
+    userRelationships,
+    issueRelationships,
+  );
+
   const schema = {
     allTables: {
       user: user.build(),
@@ -77,11 +87,11 @@ test('building a schema', () => {
     },
     allRelationships: {
       user: {
-        recruiter: userRelationships.recruiter,
+        recruiter: userRelationships.relationships.recruiter,
       },
       issue: {
-        owner: issueRelationships.owner,
-        labels: issueRelationships.labels,
+        owner: issueRelationships.relationships.owner,
+        labels: issueRelationships.relationships.labels,
       },
     },
   } as const;
