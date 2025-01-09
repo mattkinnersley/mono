@@ -1,11 +1,10 @@
 import {beforeEach, expect, expectTypeOf, test} from 'vitest';
 import {createSilentLogContext} from '../../shared/src/logging-test-utils.js';
 import {must} from '../../shared/src/must.js';
-import {normalizeTableSchema} from '../../zero-schema/src/normalize-table-schema.js';
 import {MemoryStorage} from '../../zql/src/ivm/memory-storage.js';
 import type {Source} from '../../zql/src/ivm/source.js';
 import {newQuery, type QueryDelegate} from '../../zql/src/query/query-impl.js';
-import {schemas} from '../../zql/src/query/test/testSchemas.js';
+import {schema} from '../../zql/src/query/test/testSchemas.js';
 import {Database} from './db.js';
 import {TableSource, toSQLiteTypeName} from './table-source.js';
 
@@ -19,25 +18,24 @@ beforeEach(() => {
       if (source) {
         return source;
       }
-      const schema = normalizeTableSchema(
-        schemas[name as keyof typeof schemas],
-      );
+
+      const tableSchema = schema.tables[name as keyof typeof schema.tables];
 
       // create the SQLite table
       db.exec(`
       CREATE TABLE "${name}" (
-        ${Object.entries(schema.columns)
+        ${Object.entries(tableSchema.columns)
           .map(([name, c]) => `"${name}" ${toSQLiteTypeName(c.type)}`)
           .join(', ')},
-        PRIMARY KEY (${schema.primaryKey.map(k => `"${k}"`).join(', ')})
+        PRIMARY KEY (${tableSchema.primaryKey.map(k => `"${k}"`).join(', ')})
       )`);
 
       source = new TableSource(
         'query.test.ts',
         db,
         name,
-        schema.columns,
-        schema.primaryKey,
+        tableSchema.columns,
+        tableSchema.primaryKey,
       );
 
       sources.set(name, source);

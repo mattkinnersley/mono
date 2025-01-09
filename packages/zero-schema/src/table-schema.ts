@@ -30,7 +30,7 @@ type EnumSchemaValue<T> = {
 export type TableSchema = {
   readonly name: string;
   readonly columns: Record<string, SchemaValue | ValueType>;
-  readonly primaryKey: PrimaryKey | string;
+  readonly primaryKey: PrimaryKey;
 };
 
 export type RelationshipsSchema = {

@@ -1,3 +1,4 @@
+import type {PrimaryKey} from '../../../zero-protocol/src/primary-key.js';
 import type {SchemaValue, TableSchema} from '../table-schema.js';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -5,7 +6,7 @@ export function table<TName extends string>(name: TName) {
   return new TableBuilder({
     name,
     columns: {},
-    primaryKey: null as any,
+    primaryKey: [] as any as PrimaryKey,
   });
 }
 
