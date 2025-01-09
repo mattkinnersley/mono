@@ -106,7 +106,7 @@ type HumanReadable<T> = T extends object
 
 export interface Query<
   TSchema extends FullSchema,
-  TTable extends string,
+  TTable extends keyof TSchema['tables'] & string,
   TReturn = PullRow<TTable, TSchema>,
 > {
   related<TRelationship extends AvailableRelationships<TTable, TSchema>>(

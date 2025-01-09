@@ -185,9 +185,11 @@ const schema = createSchema(
   },
 );
 
+type Schema = typeof schema;
+
 describe('types', () => {
   test('simple select', () => {
-    const query = mockQuery as unknown as Query<typeof schema, 'test'>;
+    const query = mockQuery as unknown as Query<Schema, 'test'>;
 
     // no select? All fields are returned.
     expectTypeOf(query.materialize().data).toMatchTypeOf<
@@ -196,7 +198,7 @@ describe('types', () => {
   });
 
   test('simple select with enums', () => {
-    const query = mockQuery as unknown as Query<SchemaWithEnums>;
+    const query = mockQuery as unknown as Query<Schema, 'testWithEnums'>;
     expectTypeOf(query.run()).toMatchTypeOf<
       ReadonlyArray<{
         s: string;
