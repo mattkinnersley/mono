@@ -63,7 +63,7 @@ type DestRow<
   TTable extends string,
   TSchema extends FullSchema,
   TRelationship extends string,
-> = Row<DestTableName<TTable, TSchema, TRelationship>, TSchema>;
+> = PullRow<DestTableName<TTable, TSchema, TRelationship>, TSchema>;
 
 type AddSubreturn<
   TExistingReturn,
@@ -78,7 +78,7 @@ export type PullTableSchema<
   TSchemas extends FullSchema,
 > = TSchemas['tables'][TTable];
 
-type Row<TTable extends string, TSchema extends FullSchema> = {
+type PullRow<TTable extends string, TSchema extends FullSchema> = {
   readonly [K in keyof PullTableSchema<
     TTable,
     TSchema
@@ -86,6 +86,17 @@ type Row<TTable extends string, TSchema extends FullSchema> = {
     PullTableSchema<TTable, TSchema>['columns'][K]
   >;
 };
+
+export type Row<T extends TableSchema | Query<string, FullSchema>> =
+  T extends TableSchema
+    ? {
+        readonly [K in keyof T['columns']]: SchemaValueToTSType<
+          T['columns'][K]
+        >;
+      }
+    : T extends Query<string, FullSchema, infer TReturn>
+    ? TReturn
+    : never;
 
 type HumanReadable<T> = T extends object
   ? T extends infer O
@@ -96,7 +107,7 @@ type HumanReadable<T> = T extends object
 export interface Query<
   TTable extends string,
   TSchema extends FullSchema,
-  TReturn = Row<TTable, TSchema>,
+  TReturn = PullRow<TTable, TSchema>,
 > {
   related<TRelationship extends AvailableRelationships<TTable, TSchema>>(
     relationship: TRelationship,
@@ -168,7 +179,7 @@ export interface Query<
   ): Query<TTable, TSchema, TReturn>;
 
   start(
-    row: Partial<Row<TTable, TSchema>>,
+    row: Partial<PullRow<TTable, TSchema>>,
     opts?: {inclusive: boolean} | undefined,
   ): Query<TTable, TSchema, TReturn>;
 

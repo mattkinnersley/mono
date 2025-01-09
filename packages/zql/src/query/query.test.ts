@@ -1,21 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import {describe, expectTypeOf, test} from 'vitest';
 import type {ReadonlyJSONValue} from '../../../shared/src/json.js';
-import {
-  boolean,
-  enumeration,
-  json,
-  number,
-  string,
-} from '../../../zero-schema/src/column.js';
-import {
-  type Supertype,
-  type TableSchema,
-} from '../../../zero-schema/src/table-schema.js';
+import {type TableSchema} from '../../../zero-schema/src/table-schema.js';
 import type {ExpressionFactory} from './expression.js';
 import {staticParam} from './query-impl.js';
 import type {AdvancedQuery} from './query-internal.js';
-import {type Query, type QueryType, type Row} from './query.js';
+import {type Query, type Row} from './query.js';
 import {toStaticParam} from '../../../zero-protocol/src/ast.js';
 
 const mockQuery = {
