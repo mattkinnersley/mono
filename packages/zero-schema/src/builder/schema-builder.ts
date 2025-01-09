@@ -10,10 +10,10 @@ export function createSchema<
   tables: TTables,
   relationships: TRelationships,
 ): {
-  allTables: {
+  tables: {
     [K in keyof TTables as TTables[K]['schema']['name']]: TTables[K]['schema'];
   };
-  allRelationships: {
+  relationships: {
     [K in keyof TRelationships as TRelationships[K]['name']]: TRelationships[K]['relationships'];
   };
 } {

@@ -12,10 +12,10 @@ test('types', () => {
     primaryKey: 'id',
   } as const;
   const schemas = {
-    allTables: {
+    tables: {
       user,
     },
-    allRelationships: {
+    relationships: {
       user: {
         recruiter: [
           {
