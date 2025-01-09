@@ -1,29 +1,48 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type {RelationshipsSchema, TableSchema2} from '../table-schema.js';
+import type {TableSchema2} from '../table-schema.js';
 import type {Relationships} from './relationship-builder.js';
 
-export function createSchema<TSchemas extends (TableSchema2 | Relationships)[]>(
-  ...schemas: TSchemas
+export function createSchema<
+  TTables extends Record<string, TableSchema2>,
+  TRelationships extends Record<string, Relationships>,
+>(
+  tables: TTables,
+  relationships: TRelationships,
 ): {
   allTables: {
-    [K in keyof TSchemas as TSchemas[K &
-      number]['name']]: TSchemas[K] extends TableSchema2 ? TSchemas[K] : never;
+    [K in keyof TTables as TTables[K]['name']]: TTables[K];
   };
   allRelationships: {
-    [K in keyof TSchemas as TSchemas[K &
-      number]['name']]: TSchemas[K] extends Relationships
-      ? TSchemas[K]['relationships']
-      : never;
+    [K in keyof TRelationships as TRelationships[K]['name']]: TRelationships[K]['relationships'];
   };
 } {
-  const allTables: Record<string, TableSchema2> = {};
-  const allRelationships: Record<string, RelationshipsSchema> = {};
-  for (const schema of schemas) {
-    if ('relationships' in schema) {
-      allRelationships[schema.name] = schema.relationships;
-    } else {
-      allTables[schema.name] = schema;
-    }
-  }
-  return {allTables, allRelationships} as any;
+  throw new Error();
 }
+
+// export function createSchema<
+//   TTables extends TableSchema2[],
+//   TRelationships extends Relationships[],
+// >(
+//   tables: TTables,
+//   relationships: TRelationships,
+// ): {
+//   allTables: {
+//     [K in keyof TTables as TTables[K & number]['name']]: TTables[K & number];
+//   };
+//   allRelationships: {
+//     [K in keyof TRelationships as TRelationships[K &
+//       number]['name']]: TRelationships[K & number]['relationships'];
+//   };
+// } {
+//   throw new Error();
+//   // const allTables: Record<string, TableSchema2> = {};
+//   // const allRelationships: Record<string, RelationshipsSchema> = {};
+//   // for (const schema of schemas) {
+//   //   if ('relationships' in schema) {
+//   //     allRelationships[schema.name] = schema.relationships;
+//   //   } else {
+//   //     allTables[schema.name] = schema;
+//   //   }
+//   // }
+//   // return {allTables, allRelationships} as any;
+// }

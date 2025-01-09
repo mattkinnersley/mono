@@ -70,34 +70,28 @@ test('building a schema', () => {
   // const schema = createSchema({user, userRelationships});
 
   const schema1 = createSchema(
-    user.build(),
-    issue.build(),
-    issueLabel.build(),
-    label.build(),
-    userRelationships,
-    issueRelationships,
+    {user: user.build(), issue: issue.build()},
+    {
+      userRelationships,
+      issueRelationships,
+    },
   );
 
-  const schema = {
-    allTables: {
-      user: user.build(),
-      issue: issue.build(),
-      issueLabel: issueLabel.build(),
-      label: label.build(),
-    },
-    allRelationships: {
-      user: {
-        recruiter: userRelationships.relationships.recruiter,
-      },
-      issue: {
-        owner: issueRelationships.relationships.owner,
-        labels: issueRelationships.relationships.labels,
-      },
-    },
-  } as const;
+  // const schema = {
+  //   allTables: {
+  //     user: user.build(),
+  //     issue: issue.build(),
+  //     issueLabel: issueLabel.build(),
+  //     label: label.build(),
+  //   },
+  //   allRelationships: {
+  //     user: userRelationships.relationships,
+  //     issue: issueRelationships.relationships,
+  //   },
+  // } as const;
 
-  const q = {} as Query<'user', typeof schema>;
-  const iq = {} as Query<'issue', typeof schema>;
+  const q = {} as Query<'user', typeof schema1>;
+  const iq = {} as Query<'issue', typeof schema1>;
   const r = q.related('recruiter', q => q.related('recruiter')).run();
 
   const id = iq.related('labels').run();
