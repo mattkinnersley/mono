@@ -1,146 +1,161 @@
-export const issueSchema = {
-  tableName: 'issue',
-  columns: {
-    id: {type: 'string'},
-    title: {type: 'string'},
-    description: {type: 'string'},
-    closed: {type: 'boolean'},
-    ownerId: {type: 'string', optional: true},
-  },
-  primaryKey: ['id'],
-  relationships: {
-    owner: {
-      sourceField: ['ownerId'],
-      destField: ['id'],
-      destSchema: () => userSchema,
-    },
-    comments: {
-      sourceField: ['id'],
-      destField: ['issueId'],
-      destSchema: () => commentSchema,
-    },
-    labels: [
-      {
-        sourceField: ['id'],
-        destField: ['issueId'],
-        destSchema: () => issueLabelSchema,
-      },
-      {
-        sourceField: ['labelId'],
-        destField: ['id'],
-        destSchema: () => labelSchema,
-      },
-    ],
-  },
-} as const;
+import {
+  boolean,
+  json,
+  number,
+  string,
+  table,
+} from '../../../../zero-schema/src/builder/table-builder.js';
+import {relationships} from '../../../../zero-schema/src/builder/relationship-builder.js';
+import {createSchema} from '../../../../zero-schema/src/builder/schema-builder.js';
 
-export const issueLabelSchema = {
-  tableName: 'issueLabel',
-  columns: {
-    issueId: {type: 'string'},
-    labelId: {type: 'string'},
-  },
-  primaryKey: ['issueId', 'labelId'],
-  relationships: {},
-} as const;
+const issue = table('issue')
+  .columns({
+    id: string(),
+    title: string(),
+    description: string(),
+    closed: boolean(),
+    ownerId: string().optional(),
+  })
+  .primaryKey('id');
 
-export const labelSchema = {
-  tableName: 'label',
-  columns: {
-    id: {type: 'string'},
-    name: {type: 'string'},
-  },
-  primaryKey: ['id'],
-  relationships: {
-    issues: [
-      {
-        sourceField: ['id'],
-        destField: ['labelId'],
-        destSchema: issueLabelSchema,
-      },
-      {
-        sourceField: ['issueId'],
-        destField: ['id'],
-        destSchema: issueSchema,
-      },
-    ],
-  },
-} as const;
+const user = table('user')
+  .columns({
+    id: string(),
+    name: string(),
+    metadata: json<{
+      registrar: 'github' | 'google';
+      email: string;
+      altContacts?: string[];
+    }>().optional(),
+  })
+  .primaryKey('id');
 
-export const commentSchema = {
-  tableName: 'comment',
-  columns: {
-    id: {type: 'string'},
-    authorId: {type: 'string'},
-    issueId: {type: 'string'},
-    text: {type: 'string'},
-    createdAt: {type: 'number'},
-  },
-  primaryKey: ['id'],
-  relationships: {
-    issue: {
-      sourceField: ['issueId'],
-      destField: ['id'],
-      destSchema: issueSchema,
-    },
-    revisions: {
-      sourceField: ['id'],
-      destField: ['commentId'],
-      destSchema: () => revisionSchema,
-    },
-    author: {
-      sourceField: ['authorId'],
-      destField: ['id'],
-      destSchema: () => userSchema,
-    },
-  },
-} as const;
+const comment = table('comment')
+  .columns({
+    id: string(),
+    authorId: string(),
+    issueId: string(),
+    text: string(),
+    createdAt: number(),
+  })
+  .primaryKey('id');
 
-export const revisionSchema = {
-  tableName: 'revision',
-  columns: {
-    id: {type: 'string'},
-    authorId: {type: 'string'},
-    commentId: {type: 'string'},
-    text: {type: 'string'},
-  },
-  primaryKey: ['id'],
-  relationships: {
-    comment: {
-      sourceField: ['commentId'],
-      destField: ['id'],
-      destSchema: commentSchema,
-    },
-    author: {
-      sourceField: ['authorId'],
-      destField: ['id'],
-      destSchema: () => userSchema,
-    },
-  },
-} as const;
+const issueLabel = table('issueLabel')
+  .columns({
+    issueId: string(),
+    labelId: string(),
+  })
+  .primaryKey('issueId', 'labelId');
 
-export const userSchema = {
-  tableName: 'user',
-  columns: {
-    id: {type: 'string'},
-    name: {type: 'string'},
-    metadata: {type: 'json', optional: true},
-  },
-  primaryKey: 'id',
-  relationships: {
-    issues: {
-      sourceField: ['id'],
-      destField: ['ownerId'],
-      destSchema: issueSchema,
-    },
-  },
-} as const;
+const label = table('label')
+  .columns({
+    id: string(),
+    name: string(),
+  })
+  .primaryKey('id');
 
-export const schemas = {
-  issue: issueSchema,
-  issueLabel: issueLabelSchema,
-  label: labelSchema,
-  comment: commentSchema,
-  revision: revisionSchema,
-  user: userSchema,
-} as const;
+const revision = table('revision')
+  .columns({
+    id: string(),
+    authorId: string(),
+    commentId: string(),
+    text: string(),
+  })
+  .primaryKey('id');
+
+const issueRelationships = relationships(issue, connect => ({
+  owner: connect({
+    sourceField: 'ownerId',
+    destField: 'id',
+    destSchema: user,
+  }),
+  comments: connect({
+    sourceField: 'id',
+    destField: 'issueId',
+    destSchema: comment,
+  }),
+  labels: connect(
+    {
+      sourceField: 'id',
+      destField: 'issueId',
+      destSchema: issueLabel,
+    },
+    {
+      sourceField: 'labelId',
+      destField: 'id',
+      destSchema: label,
+    },
+  ),
+}));
+
+const userRelationships = relationships(user, connect => ({
+  issues: connect({
+    sourceField: 'id',
+    destField: 'ownerId',
+    destSchema: issue,
+  }),
+}));
+
+const commentRelationships = relationships(comment, connect => ({
+  issue: connect({
+    sourceField: 'issueId',
+    destField: 'id',
+    destSchema: issue,
+  }),
+  revisions: connect({
+    sourceField: 'id',
+    destField: 'commentId',
+    destSchema: revision,
+  }),
+  author: connect({
+    sourceField: 'authorId',
+    destField: 'id',
+    destSchema: user,
+  }),
+}));
+
+const revisionRelationships = relationships(revision, connect => ({
+  comment: connect({
+    sourceField: 'commentId',
+    destField: 'id',
+    destSchema: comment,
+  }),
+  author: connect({
+    sourceField: 'authorId',
+    destField: 'id',
+    destSchema: user,
+  }),
+}));
+
+const labelRelationships = relationships(label, connect => ({
+  issues: connect(
+    {
+      sourceField: 'id',
+      destField: 'labelId',
+      destSchema: issueLabel,
+    },
+    {
+      sourceField: 'issueId',
+      destField: 'id',
+      destSchema: issue,
+    },
+  ),
+}));
+
+export const schema = createSchema(
+  {
+    issue,
+    user,
+    comment,
+    revision,
+    label,
+    issueLabel,
+  },
+  {
+    issueRelationships,
+    userRelationships,
+    commentRelationships,
+    revisionRelationships,
+    labelRelationships,
+  },
+);

@@ -110,15 +110,11 @@ class ColumnBuilder<TShape extends SchemaValue<any>> {
     this.#schema = schema;
   }
 
-  optional(): ColumnBuilder<
-    TShape & {
-      optional: true;
-    }
-  > {
+  optional(): ColumnBuilder<Omit<TShape, 'optional'> & {optional: true}> {
     return new ColumnBuilder({
       ...this.#schema,
       optional: true,
-    } as const);
+    });
   }
 
   get schema() {
