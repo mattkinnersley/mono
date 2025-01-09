@@ -186,6 +186,7 @@ const schema = createSchema(
 );
 
 type Schema = typeof schema;
+type SchemaWithEnums = Schema['tables']['testWithEnums'];
 
 describe('types', () => {
   test('simple select', () => {
@@ -206,7 +207,7 @@ describe('types', () => {
       }>
     >();
 
-    const q2 = mockQuery as unknown as Query<typeof schemaWithAdvancedTypes>;
+    const q2 = mockQuery as unknown as Query<Schema, 'schemaWithAdvancedTypes'>;
     q2.where('e', '=', 'open');
     // @ts-expect-error - invalid enum value
     q2.where('e', 'bogus');
@@ -217,7 +218,7 @@ describe('types', () => {
         b: boolean;
         j: {foo: string; bar: boolean};
         e: 'open' | 'closed';
-        otherId: IdOf<SchemaWithEnums>;
+        otherId: IdOf<Schema['tables']['testWithEnums']>;
       }>
     >();
 
@@ -231,7 +232,10 @@ describe('types', () => {
   });
 
   test('related with advanced types', () => {
-    const query = mockQuery as unknown as Query<typeof schemaWithAdvancedTypes>;
+    const query = mockQuery as unknown as Query<
+      Schema,
+      'schemaWithAdvancedTypes'
+    >;
 
     const query2 = query.related('self');
     expectTypeOf(query2.run()).toMatchTypeOf<
@@ -241,14 +245,14 @@ describe('types', () => {
         b: boolean;
         j: {foo: string; bar: boolean};
         e: 'open' | 'closed';
-        otherId: IdOf<SchemaWithEnums>;
+        otherId: IdOf<Schema['tables']['testWithEnums']>;
         self: ReadonlyArray<{
           s: string;
           n: Timestamp;
           b: boolean;
           j: {foo: string; bar: boolean};
           e: 'open' | 'closed';
-          otherId: IdOf<SchemaWithEnums>;
+          otherId: IdOf<Schema['tables']['testWithEnums']>;
         }>;
       }>
     >();
@@ -262,7 +266,10 @@ describe('types', () => {
   });
 
   test('related', () => {
-    const query = mockQuery as unknown as Query<TestSchemaWithRelationships>;
+    const query = mockQuery as unknown as Query<
+      Schema,
+      'testWithRelationships'
+    >;
 
     // @ts-expect-error - cannot traverse a relationship that does not exist
     query.related('doesNotExist', q => q);
@@ -271,15 +278,17 @@ describe('types', () => {
 
     expectTypeOf(query2.materialize().data).toMatchTypeOf<
       ReadonlyArray<
-        Row<TestSchemaWithMoreRelationships> & {
-          test: ReadonlyArray<Row<TestSchema>>;
+        Row<Schema['tables']['testWithMoreRelationships']> & {
+          test: ReadonlyArray<Row<Schema['tables']['test']>>;
         }
       >
     >();
 
     // Many calls to related builds up the related object.
-    const query3 =
-      mockQuery as unknown as Query<TestSchemaWithMoreRelationships>;
+    const query3 = mockQuery as unknown as Query<
+      Schema,
+      'testWithMoreRelationships'
+    >;
     const t = query3
       .related('self')
       .related('testWithRelationships')
@@ -302,7 +311,7 @@ describe('types', () => {
   });
 
   test('related with enums', () => {
-    const query = mockQuery as unknown as Query<SchemaWithEnums>;
+    const query = mockQuery as unknown as Query<Schema, 'testWithEnums'>;
 
     const query2 = query.related('self');
     expectTypeOf(query2.run()).toMatchTypeOf<
