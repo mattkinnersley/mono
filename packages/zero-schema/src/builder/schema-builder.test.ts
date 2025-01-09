@@ -67,31 +67,16 @@ test('building a schema', () => {
     }),
   }));
 
-  // const schema = createSchema({user, userRelationships});
-
-  const schema1 = createSchema(
-    {user: user.build(), issue: issue.build()},
+  const schema = createSchema(
+    {user, issue, issueLabel, label},
     {
       userRelationships,
       issueRelationships,
     },
   );
 
-  // const schema = {
-  //   allTables: {
-  //     user: user.build(),
-  //     issue: issue.build(),
-  //     issueLabel: issueLabel.build(),
-  //     label: label.build(),
-  //   },
-  //   allRelationships: {
-  //     user: userRelationships.relationships,
-  //     issue: issueRelationships.relationships,
-  //   },
-  // } as const;
-
-  const q = {} as Query<'user', typeof schema1>;
-  const iq = {} as Query<'issue', typeof schema1>;
+  const q = {} as Query<'user', typeof schema>;
+  const iq = {} as Query<'issue', typeof schema>;
   const r = q.related('recruiter', q => q.related('recruiter')).run();
 
   const id = iq.related('labels').run();
