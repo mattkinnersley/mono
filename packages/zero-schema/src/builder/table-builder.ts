@@ -41,6 +41,14 @@ export function json<T = any>() {
   });
 }
 
+export function enumeration<T extends string>() {
+  return new ColumnBuilder({
+    type: 'string',
+    optional: false,
+    customType: null as unknown as T,
+  });
+}
+
 export const column = {
   string,
   number,
