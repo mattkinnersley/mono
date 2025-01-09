@@ -124,7 +124,7 @@ beforeEach(() => {
 });
 
 test('row type', () => {
-  const query = newQuery(queryDelegate, 'issue', schema)
+  const query = newQuery(queryDelegate, schema, 'issue')
     .whereExists('labels', q => q.where('name', '=', 'bug'))
     .related('labels');
   type RT = ReturnType<typeof query.run>[0];
@@ -142,7 +142,7 @@ test('row type', () => {
 });
 
 test('basic query', () => {
-  const query = newQuery(queryDelegate, schemas.issue);
+  const query = newQuery(queryDelegate, schema, 'issue');
   const data = query.run();
   expect(data).toMatchInlineSnapshot(`
     [
@@ -172,19 +172,19 @@ test('basic query', () => {
 });
 
 test('null compare', () => {
-  let rows = newQuery(queryDelegate, schemas.issue)
+  let rows = newQuery(queryDelegate, schema, 'issue')
     .where('ownerId', '=', null)
     .run();
 
   expect(rows).toEqual([]);
 
-  rows = newQuery(queryDelegate, schemas.issue)
+  rows = newQuery(queryDelegate, schema, 'issue')
     .where('ownerId', '!=', null)
     .run();
 
   expect(rows).toEqual([]);
 
-  rows = newQuery(queryDelegate, schemas.issue)
+  rows = newQuery(queryDelegate, schema, 'issue')
     .where('ownerId', 'IS', null)
     .run();
 
@@ -200,7 +200,7 @@ test('null compare', () => {
     ]
   `);
 
-  rows = newQuery(queryDelegate, schemas.issue)
+  rows = newQuery(queryDelegate, schema, 'issue')
     .where('ownerId', 'IS NOT', null)
     .run();
 
@@ -225,7 +225,7 @@ test('null compare', () => {
 });
 
 test('or', () => {
-  const query = newQuery(queryDelegate, schemas.issue).where(({or, cmp}) =>
+  const query = newQuery(queryDelegate, schema, 'issue').where(({or, cmp}) =>
     or(cmp('ownerId', '=', '0001'), cmp('ownerId', '=', '0002')),
   );
   const data = query.run();
@@ -250,7 +250,7 @@ test('or', () => {
 });
 
 test('where exists retracts when an edit causes a row to no longer match', () => {
-  const query = newQuery(queryDelegate, schemas.issue)
+  const query = newQuery(queryDelegate, schema, 'issue')
     .whereExists('labels', q => q.where('name', '=', 'bug'))
     .related('labels');
 

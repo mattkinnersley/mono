@@ -54,8 +54,8 @@ export function newQuery<
   TSchema extends FullSchema,
 >(
   delegate: QueryDelegate,
-  table: TTable,
   schema: TSchema,
+  table: TTable,
 ): Query<TTable, TSchema> {
   return new QueryImpl(delegate, schema);
 }
