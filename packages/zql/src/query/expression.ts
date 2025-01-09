@@ -50,13 +50,13 @@ export class ExpressionBuilder<
 > {
   readonly #exists: (
     relationship: string,
-    cb?: (query: Query<TTable, TSchema>) => Query<TTable, TSchema>,
+    cb?: (query: Query<TSchema, TTable>) => Query<TSchema, TTable>,
   ) => Condition;
 
   constructor(
     exists: (
       relationship: string,
-      cb?: (query: Query<TTable, TSchema>) => Query<TTable, TSchema>,
+      cb?: (query: Query<TSchema, TTable>) => Query<TSchema, TTable>,
     ) => Condition,
   ) {
     this.#exists = exists;
@@ -124,12 +124,12 @@ export class ExpressionBuilder<
   exists<TRelationship extends AvailableRelationships<TTable, TSchema>>(
     relationship: TRelationship,
     cb: (
-      query: Query<DestTableName<TTable, TSchema, TRelationship>, TSchema>,
-    ) => Query<TTable, TSchema>,
+      query: Query<TSchema, DestTableName<TTable, TSchema, TRelationship>>,
+    ) => Query<TSchema, TTable>,
   ): Condition;
   exists(
     relationship: string,
-    cb?: (query: Query<TTable, TSchema>) => Query<TTable, TSchema>,
+    cb?: (query: Query<TSchema, TTable>) => Query<TSchema, TTable>,
   ): Condition {
     return this.#exists(relationship, cb);
   }

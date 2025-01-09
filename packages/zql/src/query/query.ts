@@ -87,14 +87,14 @@ type PullRow<TTable extends string, TSchema extends FullSchema> = {
   >;
 };
 
-export type Row<T extends TableSchema | Query<string, FullSchema>> =
+export type Row<T extends TableSchema | Query<FullSchema, string>> =
   T extends TableSchema
     ? {
         readonly [K in keyof T['columns']]: SchemaValueToTSType<
           T['columns'][K]
         >;
       }
-    : T extends Query<string, FullSchema, infer TReturn>
+    : T extends Query<FullSchema, string, infer TReturn>
     ? TReturn
     : never;
 
@@ -105,15 +105,15 @@ type HumanReadable<T> = T extends object
   : T;
 
 export interface Query<
-  TTable extends string,
   TSchema extends FullSchema,
+  TTable extends string,
   TReturn = PullRow<TTable, TSchema>,
 > {
   related<TRelationship extends AvailableRelationships<TTable, TSchema>>(
     relationship: TRelationship,
   ): Query<
-    TTable,
     TSchema,
+    TTable,
     AddSubreturn<
       TReturn,
       readonly DestRow<TTable, TSchema, TRelationship>[],
@@ -122,18 +122,18 @@ export interface Query<
   >;
   related<
     TRelationship extends AvailableRelationships<TTable, TSchema>,
-    TSub extends Query<string, TSchema>,
+    TSub extends Query<TSchema, string>,
   >(
     relationship: TRelationship,
     cb: (
-      q: Query<DestTableName<TTable, TSchema, TRelationship>, TSchema>,
+      q: Query<TSchema, DestTableName<TTable, TSchema, TRelationship>>,
     ) => TSub,
   ): Query<
-    TTable,
     TSchema,
+    TTable,
     AddSubreturn<
       TReturn,
-      TSub extends Query<string, TSchema, infer TSubReturn>
+      TSub extends Query<TSchema, string, infer TSubReturn>
         ? TSubReturn[]
         : never,
       TRelationship
@@ -153,7 +153,7 @@ export interface Query<
           TOperator
         >
       | ParameterReference,
-  ): Query<TTable, TSchema, TReturn>;
+  ): Query<TSchema, TTable, TReturn>;
   where<TSelector extends NoJsonSelector<PullTableSchema<TTable, TSchema>>>(
     field: TSelector,
     value:
@@ -163,36 +163,38 @@ export interface Query<
           '='
         >
       | ParameterReference,
-  ): Query<TTable, TSchema, TReturn>;
+  ): Query<TSchema, TTable, TReturn>;
   where(
     expressionFactory: ExpressionFactory<TTable, TSchema>,
-  ): Query<TTable, TSchema, TReturn>;
+  ): Query<TSchema, TTable, TReturn>;
 
   whereExists(
     relationship: AvailableRelationships<TTable, TSchema>,
-  ): Query<TTable, TSchema, TReturn>;
+  ): Query<TSchema, TTable, TReturn>;
   whereExists<TRelationship extends AvailableRelationships<TTable, TSchema>>(
     relationship: TRelationship,
     cb: (
-      q: Query<DestTableName<TTable, TSchema, TRelationship>, TSchema>,
-    ) => Query<string, TSchema>,
-  ): Query<TTable, TSchema, TReturn>;
+      q: Query<TSchema, DestTableName<TTable, TSchema, TRelationship>>,
+    ) => Query<TSchema, string>,
+  ): Query<TSchema, TTable, TReturn>;
 
   start(
     row: Partial<PullRow<TTable, TSchema>>,
     opts?: {inclusive: boolean} | undefined,
-  ): Query<TTable, TSchema, TReturn>;
+  ): Query<TSchema, TTable, TReturn>;
 
-  limit(limit: number): Query<TTable, TSchema, TReturn>;
+  limit(limit: number): Query<TSchema, TTable, TReturn>;
 
   orderBy<TSelector extends Selector<PullTableSchema<TTable, TSchema>>>(
     field: TSelector,
     direction: 'asc' | 'desc',
-  ): Query<TTable, TSchema, TReturn>;
+  ): Query<TSchema, TTable, TReturn>;
 
-  one(): Query<TTable, TSchema, TReturn | undefined>;
+  one(): Query<TSchema, TTable, TReturn | undefined>;
 
-  materialize(): TypedView<TReturn extends undefined ? TReturn : TReturn[]>;
+  materialize(): TypedView<
+    HumanReadable<TReturn extends undefined ? TReturn : TReturn[]>
+  >;
 
   run(): HumanReadable<TReturn extends undefined ? TReturn : TReturn[]>;
 

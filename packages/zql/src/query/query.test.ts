@@ -7,6 +7,16 @@ import {staticParam} from './query-impl.js';
 import type {AdvancedQuery} from './query-internal.js';
 import {type Query, type Row} from './query.js';
 import {toStaticParam} from '../../../zero-protocol/src/ast.js';
+import {
+  boolean,
+  enumeration,
+  json,
+  number,
+  string,
+  table,
+} from '../../../zero-schema/src/builder/table-builder.js';
+import {relationships} from '../../../zero-schema/src/builder/relationship-builder.js';
+import {createSchema} from '../../../zero-schema/src/builder/schema-builder.js';
 
 const mockQuery = {
   select() {
@@ -39,33 +49,6 @@ const mockQuery = {
   },
 };
 
-type TestSchema = {
-  tableName: 'test';
-  columns: {
-    s: {type: 'string'};
-    b: {type: 'boolean'};
-    n: {type: 'number'};
-  };
-  primaryKey: ['s'];
-  relationships: {};
-};
-
-type SchemaWithEnums = {
-  tableName: 'testWithEnums';
-  columns: {
-    s: {type: 'string'};
-    e: {kind: 'enum'; type: 'string'; customType: 'open' | 'closed'};
-  };
-  primaryKey: ['s'];
-  relationships: {
-    self: {
-      sourceField: ['s'];
-      destField: ['s'];
-      destSchema: SchemaWithEnums;
-    };
-  };
-};
-
 type Opaque<BaseType, BrandType = unknown> = BaseType & {
   readonly [base]: BaseType;
   readonly [brand]: BrandType;
@@ -81,88 +64,134 @@ function timestamp(n: number): Timestamp {
   return n as Timestamp;
 }
 
-const schemaWithAdvancedTypes = {
-  tableName: 'schemaWithAdvancedTypes',
-  columns: {
+const testSchema = table('test')
+  .columns({
+    s: string(),
+    b: boolean(),
+    n: number(),
+  })
+  .primaryKey('s');
+
+const schemaWithEnums = table('testWithEnums')
+  .columns({
+    s: string(),
+    e: enumeration<'open' | 'closed'>(),
+  })
+  .primaryKey('s');
+
+const schemaWithEnumsRelationships = relationships(
+  schemaWithEnums,
+  connect => ({
+    self: connect({
+      sourceField: 's',
+      destField: 's',
+      destSchema: schemaWithEnums,
+    }),
+  }),
+);
+
+const schemaWithAdvancedTypes = table('schemaWithAdvancedTypes')
+  .columns({
     s: string(),
     n: number<Timestamp>(),
     b: boolean(),
     j: json<{foo: string; bar: boolean}>(),
     e: enumeration<'open' | 'closed'>(),
-    otherId: string<IdOf<SchemaWithEnums>>(),
+    otherId: string<IdOf<(typeof schemaWithEnums)['schema']>>(),
+  })
+  .primaryKey('s');
+
+const withAdvancedTypesRelationships = relationships(
+  schemaWithAdvancedTypes,
+  connect => ({
+    self: connect({
+      sourceField: 's',
+      destField: 's',
+      destSchema: schemaWithAdvancedTypes,
+    }),
+  }),
+);
+
+const schemaWithJson = table('testWithJson')
+  .columns({
+    a: string(),
+    j: json(),
+    maybeJ: json().optional(),
+  })
+  .primaryKey('a');
+
+const testWithRelationships = table('testWithRelationships')
+  .columns({
+    s: string(),
+    a: string(),
+    b: boolean(),
+  })
+  .primaryKey('s');
+
+const testWithRelationshipsRelationships = relationships(
+  testWithRelationships,
+  connect => ({
+    test: connect({
+      sourceField: 's',
+      destField: 's',
+      destSchema: testSchema,
+    }),
+  }),
+);
+
+const testWithMoreRelationships = table('testWithMoreRelationships')
+  .columns({
+    s: string(),
+    a: string(),
+    b: boolean(),
+  })
+  .primaryKey('s');
+
+const testWithMoreRelationshipsRelationships = relationships(
+  testWithMoreRelationships,
+  connect => ({
+    testWithRelationships: connect({
+      sourceField: 'a',
+      destField: 'a',
+      destSchema: testWithRelationships,
+    }),
+    test: connect({
+      sourceField: 's',
+      destField: 's',
+      destSchema: testSchema,
+    }),
+    self: connect({
+      sourceField: 's',
+      destField: 's',
+      destSchema: testWithMoreRelationships,
+    }),
+  }),
+);
+
+const schema = createSchema(
+  {
+    testSchema,
+    schemaWithEnums,
+    schemaWithJson,
+    schemaWithAdvancedTypes,
+    testWithRelationships,
+    testWithMoreRelationships,
   },
-  primaryKey: ['s'],
-  relationships: {
-    self: {
-      sourceField: ['s'],
-      destField: ['s'],
-      destSchema: () => schemaWithAdvancedTypes,
-    },
+  {
+    testWithRelationshipsRelationships,
+    testWithMoreRelationshipsRelationships,
+    withAdvancedTypesRelationships,
+    schemaWithEnumsRelationships,
   },
-} as const;
-
-type SchemaWithJson = {
-  tableName: 'testWithJson';
-  columns: {
-    a: {type: 'string'};
-    j: {type: 'json'};
-    maybeJ: {type: 'json'; optional: true};
-  };
-  primaryKey: ['a'];
-  relationships: {};
-};
-
-type TestSchemaWithRelationships = {
-  tableName: 'testWithRelationships';
-  columns: {
-    s: {type: 'string'};
-    a: {type: 'string'};
-    b: {type: 'boolean'};
-  };
-  relationships: {
-    test: {
-      sourceField: ['s'];
-      destField: ['s'];
-      destSchema: TestSchema;
-    };
-  };
-  primaryKey: ['s'];
-};
-
-type TestSchemaWithMoreRelationships = {
-  tableName: 'testWithMoreRelationships';
-  columns: {
-    s: {type: 'string'};
-    a: {type: 'string'};
-    b: {type: 'boolean'};
-  };
-  relationships: {
-    testWithRelationships: {
-      sourceField: ['a'];
-      destField: ['a'];
-      destSchema: TestSchemaWithRelationships;
-    };
-    test: {
-      sourceField: ['s'];
-      destField: ['s'];
-      destSchema: TestSchema;
-    };
-    self: {
-      sourceField: ['s'];
-      destField: ['s'];
-      destSchema: TestSchemaWithMoreRelationships;
-    };
-  };
-  primaryKey: ['s'];
-};
+);
 
 describe('types', () => {
   test('simple select', () => {
-    const query = mockQuery as unknown as Query<TestSchema>;
+    const query = mockQuery as unknown as Query<typeof schema, 'test'>;
 
     // no select? All fields are returned.
     expectTypeOf(query.materialize().data).toMatchTypeOf<
-      ReadonlyArray<Row<TestSchema>>
+      ReadonlyArray<Row<typeof schema.tables.test>>
     >();
   });
 

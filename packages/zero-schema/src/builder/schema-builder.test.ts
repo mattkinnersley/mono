@@ -91,12 +91,12 @@ test('building a schema', () => {
     },
   );
 
-  const q = {} as Query<'user', typeof schema>;
-  const iq = {} as Query<'issue', typeof schema>;
+  const q = {} as Query<typeof schema, 'user'>;
+  const iq = {} as Query<typeof schema, 'issue'>;
   const r = q.related('recruiter', q => q.related('recruiter')).run();
 
   const id = iq.related('labels').run();
 
-  const lq = {} as Query<'label', typeof schema>;
+  const lq = {} as Query<typeof schema, 'label'>;
   const ld = lq.related('issues').run();
 });

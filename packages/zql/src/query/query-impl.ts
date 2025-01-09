@@ -50,13 +50,13 @@ import type {
 import type {TypedView} from './typed-view.js';
 
 export function newQuery<
-  TTable extends keyof FullSchema['tables'] & string,
   TSchema extends FullSchema,
+  TTable extends keyof FullSchema['tables'] & string,
 >(
   delegate: QueryDelegate,
   schema: TSchema,
   table: TTable,
-): Query<TTable, TSchema> {
+): Query<TSchema, TTable> {
   return new QueryImpl(delegate, schema);
 }
 
