@@ -324,7 +324,7 @@ describe('types', () => {
   });
 
   test('where against enum field', () => {
-    const query = mockQuery as unknown as Query<SchemaWithEnums>;
+    const query = mockQuery as unknown as Query<Schema, 'testWithEnums'>;
 
     query.where('e', '=', 'open');
     query.where('e', '=', 'closed');
@@ -333,9 +333,8 @@ describe('types', () => {
   });
 
   test('one', () => {
-    const q1 = mockQuery as unknown as Query<TestSchema>;
-
-    expectTypeOf(q1.one().materialize().data).toMatchTypeOf<
+    const q1 = mockQuery as unknown as Query<Schema, 'test'>;
+    expectTypeOf(q1.one().run()).toMatchTypeOf<
       | {
           readonly s: string;
           readonly b: boolean;
@@ -345,7 +344,7 @@ describe('types', () => {
     >();
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const q1_1 = mockQuery as unknown as Query<TestSchema>;
+    const q1_1 = mockQuery as unknown as Query<Schema, 'test'>;
     expectTypeOf(q1_1.one().one().materialize().data).toMatchTypeOf<
       | {
           readonly s: string;
@@ -355,7 +354,7 @@ describe('types', () => {
       | undefined
     >();
 
-    const q2 = mockQuery as unknown as Query<TestSchemaWithRelationships>;
+    const q2 = mockQuery as unknown as Query<Schema, 'testWithRelationships'>;
     expectTypeOf(q2.related('test').one().materialize().data).toMatchTypeOf<
       | {
           readonly s: string;
@@ -371,7 +370,7 @@ describe('types', () => {
     >();
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const q2_1 = mockQuery as unknown as Query<TestSchemaWithRelationships>;
+    const q2_1 = mockQuery as unknown as Query<Schema, 'testWithRelationships'>;
     expectTypeOf(q2_1.one().related('test').materialize().data).toMatchTypeOf<
       | {
           readonly s: string;

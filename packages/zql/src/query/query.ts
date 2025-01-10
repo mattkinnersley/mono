@@ -70,9 +70,15 @@ type AddSubreturn<
   TExistingReturn,
   TSubselectReturn,
   TAs extends string,
-> = TExistingReturn & {
-  readonly [K in TAs]: TSubselectReturn;
-};
+> = undefined extends TExistingReturn
+  ?
+      | (Exclude<TExistingReturn, undefined> & {
+          readonly [K in TAs]: TSubselectReturn;
+        })
+      | undefined
+  : TExistingReturn & {
+      readonly [K in TAs]: TSubselectReturn;
+    };
 
 export type PullTableSchema<
   TTable extends string,
@@ -188,11 +194,11 @@ export interface Query<
   one(): Query<TSchema, TTable, TReturn | undefined>;
 
   materialize(): TypedView<
-    TReturn extends undefined ? Expand<TReturn> : Expand<TReturn>[]
+    undefined extends TReturn ? Expand<TReturn> : Expand<TReturn>[]
   >;
 
   // Not a recursive expand as opaque types are expanded incorrectly and this seems impossible to address.
-  run(): TReturn extends undefined ? Expand<TReturn> : Expand<TReturn>[];
+  run(): undefined extends TReturn ? Expand<TReturn> : Expand<TReturn>[];
 
   preload(): {
     cleanup: () => void;
