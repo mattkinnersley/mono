@@ -3,11 +3,14 @@ import {
   normalizeTableSchema,
   type NormalizedTableSchema,
 } from '../../../zero-schema/src/normalize-table-schema.js';
-import type {TableSchema} from '../../../zero-schema/src/table-schema.js';
+import type {
+  FullSchema,
+  TableSchema,
+} from '../../../zero-schema/src/table-schema.js';
 import type {Format} from '../ivm/view.js';
 import {ExpressionBuilder} from './expression.js';
 import {AbstractQuery} from './query-impl.js';
-import type {DefaultQueryResultRow, Query, QueryType, Smash} from './query.js';
+import type {PullRow, Query} from './query.js';
 import type {TypedView} from './typed-view.js';
 
 export function authQuery<TSchema extends TableSchema>(
@@ -17,8 +20,9 @@ export function authQuery<TSchema extends TableSchema>(
 }
 
 export class AuthQuery<
-  TTableSchema extends TableSchema,
-  TReturn extends QueryType = DefaultQueryResultRow<TTableSchema>,
+  TSchema extends FullSchema,
+  TTable extends keyof TSchema['tables'] & string,
+  TReturn = PullRow<TTable, TSchema>,
 > extends AbstractQuery<TTableSchema, TReturn> {
   constructor(
     schema: NormalizedTableSchema,

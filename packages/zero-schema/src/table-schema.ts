@@ -108,3 +108,11 @@ export function atLeastOne<T>(arr: readonly T[]): AtLeastOne<T> {
   }
   return arr as AtLeastOne<T>;
 }
+
+export function isOneHop(r: Relationship) {
+  return r.length === 1;
+}
+
+export function isManyHop(r: Relationship) {
+  return !isOneHop(r);
+}
