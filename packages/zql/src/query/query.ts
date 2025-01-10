@@ -89,7 +89,7 @@ export type PullTableSchema<
   TSchemas extends FullSchema,
 > = TSchemas['tables'][TTable];
 
-type PullRow<TTable extends string, TSchema extends FullSchema> = {
+export type PullRow<TTable extends string, TSchema extends FullSchema> = {
   readonly [K in keyof PullTableSchema<
     TTable,
     TSchema
@@ -170,7 +170,7 @@ export interface Query<
       | ParameterReference,
   ): Query<TSchema, TTable, TReturn>;
   where(
-    expressionFactory: ExpressionFactory<TTable, TSchema>,
+    expressionFactory: ExpressionFactory<TSchema, TTable>,
   ): Query<TSchema, TTable, TReturn>;
 
   whereExists(
@@ -197,15 +197,15 @@ export interface Query<
 
   one(): Query<TSchema, TTable, TReturn | undefined>;
 
-  materialize(): TypedView<
-    undefined extends TReturn ? Expand<TReturn> : Expand<TReturn>[]
-  >;
+  materialize(): TypedView<HumanReadable<TReturn>>;
 
   // Not a recursive expand as opaque types are expanded incorrectly and this seems impossible to address.
-  run(): undefined extends TReturn ? Expand<TReturn> : Expand<TReturn>[];
+  run(): HumanReadable<TReturn>;
 
   preload(): {
     cleanup: () => void;
     complete: Promise<void>;
   };
 }
+
+export type HumanReadable<T> = undefined extends T ? Expand<T> : Expand<T>[];

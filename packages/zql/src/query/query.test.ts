@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import {describe, expectTypeOf, test} from 'vitest';
 import type {ReadonlyJSONValue} from '../../../shared/src/json.js';
-import {type TableSchema} from '../../../zero-schema/src/table-schema.js';
+import {
+  type FullSchema,
+  type TableSchema,
+} from '../../../zero-schema/src/table-schema.js';
 import type {ExpressionFactory} from './expression.js';
 import {staticParam} from './query-impl.js';
 import type {AdvancedQuery} from './query-internal.js';
@@ -187,6 +190,9 @@ const schema = createSchema(
 
 type Schema = typeof schema;
 type SchemaWithEnums = Schema['tables']['testWithEnums'];
+type TestSchemaWithMoreRelationships =
+  Schema['tables']['testWithMoreRelationships'];
+type TestSchema = Schema['tables']['test'];
 
 describe('types', () => {
   test('simple select', () => {
@@ -405,7 +411,7 @@ describe('types', () => {
     >();
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const q2_3 = mockQuery as unknown as Query<TestSchemaWithRelationships>;
+    const q2_3 = mockQuery as unknown as Query<Schema, 'testWithRelationships'>;
     expectTypeOf(
       q2_3.related('test', t => t.one().where('b', true)).materialize().data,
     ).toMatchTypeOf<
@@ -423,7 +429,10 @@ describe('types', () => {
       }>
     >();
 
-    const q3 = mockQuery as unknown as Query<TestSchemaWithMoreRelationships>;
+    const q3 = mockQuery as unknown as Query<
+      Schema,
+      'testWithMoreRelationships'
+    >;
     expectTypeOf(
       q3.related('test').related('self').one().materialize().data,
     ).toMatchTypeOf<
@@ -446,7 +455,10 @@ describe('types', () => {
     >();
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const q3_1 = mockQuery as unknown as Query<TestSchemaWithMoreRelationships>;
+    const q3_1 = mockQuery as unknown as Query<
+      Schema,
+      'testWithMoreRelationships'
+    >;
     expectTypeOf(
       q3_1
         .related('test', t => t.one())
@@ -478,8 +490,10 @@ describe('types', () => {
   });
 
   test('related in subquery position', () => {
-    const query =
-      mockQuery as unknown as Query<TestSchemaWithMoreRelationships>;
+    const query = mockQuery as unknown as Query<
+      Schema,
+      'testWithMoreRelationships'
+    >;
 
     const query2 = query.related('self', query => query.related('test'));
 
@@ -497,7 +511,7 @@ describe('types', () => {
   });
 
   test('where', () => {
-    const query = mockQuery as unknown as Query<TestSchema>;
+    const query = mockQuery as unknown as Query<Schema, 'test'>;
 
     const query2 = query.where('s', '=', 'foo');
     expectTypeOf(query2.materialize().data).toMatchTypeOf<ReadonlyArray<{}>>();
@@ -513,7 +527,7 @@ describe('types', () => {
   });
 
   test('where-parameters', () => {
-    const query = mockQuery as unknown as Query<TestSchema>;
+    const query = mockQuery as unknown as Query<Schema, 'test'>;
 
     query.where('s', '=', {
       [toStaticParam]: () => staticParam('authData', 'aud'),
@@ -526,7 +540,7 @@ describe('types', () => {
   });
 
   test('where-optional-op', () => {
-    const query = mockQuery as unknown as Query<TestSchema>;
+    const query = mockQuery as unknown as Query<Schema, 'test'>;
 
     const query2 = query.where('s', 'foo');
     expectTypeOf(query2.materialize().data).toMatchTypeOf<ReadonlyArray<{}>>();
@@ -542,7 +556,7 @@ describe('types', () => {
   });
 
   test('where-in', () => {
-    const query = mockQuery as unknown as Query<TestSchema>;
+    const query = mockQuery as unknown as Query<Schema, 'test'>;
 
     // @ts-expect-error - `IN` must take an array!
     query.where('s', 'IN', 'foo');
@@ -558,7 +572,7 @@ describe('types', () => {
   });
 
   test('start', () => {
-    const query = mockQuery as unknown as Query<TestSchema>;
+    const query = mockQuery as unknown as Query<Schema, 'test'>;
     const query2 = query.start({b: true, s: 'foo'});
     expectTypeOf(query2.materialize().data).toMatchTypeOf<ReadonlyArray<{}>>();
     const query3 = query.start({b: true, s: 'foo'}, {inclusive: true});
@@ -568,140 +582,89 @@ describe('types', () => {
 
 describe('schema structure', () => {
   test('dag', () => {
-    const commentSchema: TableSchema = {
-      tableName: 'comment',
-      columns: {
-        id: {type: 'string'},
-        issueId: {type: 'string'},
-        text: {type: 'string'},
-      },
-      primaryKey: ['id'],
-      relationships: {},
-    };
+    const comment = table('comment')
+      .columns({
+        id: string(),
+        issueId: string(),
+        text: string(),
+      })
+      .primaryKey('id');
 
-    const issueSchema: TableSchema = {
-      tableName: 'issue',
-      columns: {
-        id: {type: 'string'},
-        title: {type: 'string'},
-      },
-      relationships: {
-        comments: {
-          sourceField: ['id'],
-          destField: ['issueId'],
-          destSchema: commentSchema,
-        },
-      },
-      primaryKey: ['id'],
-    };
+    const issue = table('issue')
+      .columns({
+        id: string(),
+        title: string(),
+      })
+      .primaryKey('id');
 
-    takeSchema(issueSchema);
+    const issueRelationships = relationships(issue, connect => ({
+      comments: connect({
+        sourceField: 'id',
+        destField: 'issueId',
+        destSchema: comment,
+      }),
+    }));
+
+    const schema = createSchema(
+      {
+        comment,
+        issue,
+      },
+      {
+        issueRelationships,
+      },
+    );
+
+    takeSchema(schema.tables.issue);
   });
 
   test('cycle', () => {
-    const commentSchema = {
-      tableName: 'comment',
-      primaryKey: ['id'],
-      columns: {
-        id: {type: 'string'},
-        issueId: {type: 'string'},
-        text: {type: 'string'},
-      },
-      relationships: {
-        issue: {
-          sourceField: ['issueId'],
-          destField: ['id'],
-          destSchema: () => issueSchema,
-        },
-      },
-    } as const;
+    const comment = table('comment')
+      .columns({
+        id: string(),
+        issueId: string(),
+        text: string(),
+      })
+      .primaryKey('id');
 
-    const issueSchema = {
-      tableName: 'issue',
-      primaryKey: ['id'],
-      columns: {
-        id: {type: 'string'},
-        title: {type: 'string'},
-        parentId: {type: 'string', optional: true},
-      },
-      relationships: {
-        comments: {
-          sourceField: ['id'],
-          destField: ['issueId'],
-          destSchema: commentSchema,
-        },
-        parent: {
-          sourceField: ['parentId'],
-          destField: ['id'],
-          destSchema: () => issueSchema,
-        },
-      },
-    } as const;
+    const issue = table('issue')
+      .columns({
+        id: string(),
+        title: string(),
+      })
+      .primaryKey('id');
 
-    takeSchema(issueSchema);
+    const commentRelationships = relationships(comment, connect => ({
+      issue: connect({
+        sourceField: 'issueId',
+        destField: 'id',
+        destSchema: issue,
+      }),
+    }));
+
+    const issueRelationships = relationships(issue, connect => ({
+      comments: connect({
+        sourceField: 'id',
+        destField: 'issueId',
+        destSchema: comment,
+      }),
+      parent: connect({
+        sourceField: 'parentId',
+        destField: 'id',
+        destSchema: issue,
+      }),
+    }));
+
+    const schema = createSchema(
+      {issue, comment},
+      {issueRelationships, commentRelationships},
+    );
+    takeSchema(schema.tables.issue);
   });
 });
 
-test('supertype query', () => {
-  const commentSchema = {
-    tableName: 'comment',
-    primaryKey: ['id'],
-    columns: {
-      id: {type: 'string'},
-      creatorID: {type: 'string'},
-      body: {type: 'string'},
-    },
-    relationships: {},
-  } as const;
-  const issueSchema = {
-    tableName: 'issue',
-    primaryKey: ['id'],
-    columns: {
-      id: {type: 'string'},
-      creatorID: {type: 'string'},
-      title: {type: 'string'},
-    },
-    relationships: {},
-  } as const;
-  const draftSchema = {
-    tableName: 'draft',
-    primaryKey: ['id'],
-    columns: {
-      id: {type: 'string'},
-      creatorID: {type: 'string'},
-      title: {type: 'string'},
-    },
-    relationships: {},
-  } as const;
-
-  const commentQuery = mockQuery as unknown as Query<typeof commentSchema>;
-  const issueQuery = mockQuery as unknown as Query<typeof issueSchema>;
-  const draftQuery = mockQuery as unknown as Query<typeof draftSchema>;
-
-  function checkCreator(
-    q: Query<
-      Supertype<[typeof commentSchema, typeof issueSchema, typeof draftSchema]>
-    >,
-  ) {
-    return q.where('creatorID', '=', 'foo');
-  }
-
-  function checkCreatorExpectError(
-    q: Query<Supertype<[typeof commentSchema, typeof issueSchema]>>,
-  ) {
-    // @ts-expect-error - title is not shared by both types
-    return q.where('title', 'title is not shared by both types');
-  }
-
-  checkCreator(commentQuery);
-  checkCreator(issueQuery);
-  checkCreator(draftQuery);
-  checkCreatorExpectError(commentQuery);
-  checkCreatorExpectError(issueQuery);
-});
-
 test('complex expressions', () => {
-  const query = mockQuery as unknown as Query<TestSchema>;
+  const query = mockQuery as unknown as Query<Schema, 'test'>;
 
   query.where(({cmp, or}) =>
     or(cmp('b', '!=', true), cmp('s', 'IN', ['foo', 'bar'])),
@@ -723,7 +686,7 @@ test('complex expressions', () => {
 });
 
 test('json type', () => {
-  const query = mockQuery as unknown as Query<SchemaWithJson>;
+  const query = mockQuery as unknown as Query<Schema, 'testWithJson'>;
   const datum = query.one().materialize().data;
   const {data} = query.materialize();
 
@@ -746,7 +709,7 @@ function takeSchema(x: TableSchema) {
 }
 
 test('custom materialize factory', () => {
-  const query = mockQuery as unknown as AdvancedQuery<TestSchema>;
+  const query = mockQuery as unknown as AdvancedQuery<Schema, 'test'>;
   const x = query.materialize();
   expectTypeOf(x.data).toMatchTypeOf<
     ReadonlyArray<{s: string; b: boolean; n: number}>
@@ -754,10 +717,10 @@ test('custom materialize factory', () => {
 
   // This is a pretend factory that unlike ArrayView, which has a `data` property that is an array,
   // has a `dataAsSet` property that is a Set.
-  function factory<TSchema extends TableSchema, TReturn extends QueryType>(
-    _query: Query<TSchema, TReturn>,
+  function factory<TSchema extends FullSchema, TTable extends string, TReturn>(
+    _query: Query<TSchema, TTable, TReturn>,
   ): {
-    dataAsSet: Set<TReturn['row']>;
+    dataAsSet: Set<TReturn>;
   } {
     return {dataAsSet: new Set()};
   }
@@ -769,18 +732,18 @@ test('custom materialize factory', () => {
 });
 
 test('Make sure that QueryInternal does not expose the ast', () => {
-  const query = mockQuery as unknown as Query<TestSchema>;
+  const query = mockQuery as unknown as Query<Schema, 'test'>;
   // @ts-expect-error - ast is not part of the public API
   query.ast;
 
-  const internalQuery = mockQuery as unknown as AdvancedQuery<TestSchema>;
+  const internalQuery = mockQuery as unknown as AdvancedQuery<Schema, 'test'>;
   // @ts-expect-error - ast is not part of the public API
   internalQuery.ast;
 });
 
 describe('Where expression factory and builder', () => {
   test('does not change the type', () => {
-    const query = mockQuery as unknown as Query<TestSchema>;
+    const query = mockQuery as unknown as Query<Schema, 'test'>;
 
     const query2 = query.where('n', '>', 42);
     expectTypeOf(query2).toMatchTypeOf(query);
@@ -807,7 +770,7 @@ describe('Where expression factory and builder', () => {
   });
 
   test('and, or, not, cmp, eb', () => {
-    const query = mockQuery as unknown as Query<TestSchema>;
+    const query = mockQuery as unknown as Query<Schema, 'test'>;
 
     query.where(({and, cmp, or}) =>
       and(cmp('n', '>', 42), or(cmp('b', true), cmp('s', 'foo'))),
@@ -825,8 +788,10 @@ describe('Where expression factory and builder', () => {
   });
 
   test('exists', () => {
-    const query =
-      mockQuery as unknown as Query<TestSchemaWithMoreRelationships>;
+    const query = mockQuery as unknown as Query<
+      Schema,
+      'testWithMoreRelationships'
+    >;
 
     // can check relationships
     query.where(({exists}) => exists('self'));
@@ -870,7 +835,7 @@ describe('Where expression factory and builder', () => {
 
   describe('allow undefined terms', () => {
     test('and', () => {
-      const query = mockQuery as unknown as Query<TestSchema>;
+      const query = mockQuery as unknown as Query<Schema, 'test'>;
 
       query.where(({and}) => and());
       query.where(({and}) => and(undefined));
@@ -880,7 +845,7 @@ describe('Where expression factory and builder', () => {
     });
 
     test('or', () => {
-      const query = mockQuery as unknown as Query<TestSchema>;
+      const query = mockQuery as unknown as Query<Schema, 'test'>;
 
       query.where(({or}) => or());
       query.where(({or}) => or(undefined));
@@ -891,9 +856,9 @@ describe('Where expression factory and builder', () => {
   });
 
   test('expression builder append from array', () => {
-    const q = mockQuery as unknown as Query<TestSchema>;
+    const q = mockQuery as unknown as Query<Schema, 'test'>;
     const numbers = [1, 23, 456];
-    const f: ExpressionFactory<TestSchema> = b => {
+    const f: ExpressionFactory<Schema, 'test'> = b => {
       const exprs = [];
       for (const n of numbers) {
         exprs.push(b.cmp('n', '>', n));
@@ -909,10 +874,10 @@ describe('Where expression factory and builder', () => {
       [K in keyof T]: [K, T[K]];
     }[keyof T][];
 
-    const q = mockQuery as unknown as Query<TestSchema>;
+    const q = mockQuery as unknown as Query<Schema, 'test'>;
     const o = {n: 1, s: 'hi', b: true};
     const entries = Object.entries(o) as Entries<typeof o>;
-    const f: ExpressionFactory<TestSchema> = b => {
+    const f: ExpressionFactory<Schema, 'test'> = b => {
       const exprs = [];
       for (const [n, v] of entries) {
         exprs.push(b.cmp(n, v));

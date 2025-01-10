@@ -38,15 +38,15 @@ export type ParameterReference = {
  * ```
  */
 export interface ExpressionFactory<
-  TTable extends string,
   TSchema extends FullSchema,
+  TTable extends keyof TSchema['tables'] & string,
 > {
-  (eb: ExpressionBuilder<TTable, TSchema>): Condition;
+  (eb: ExpressionBuilder<TSchema, TTable>): Condition;
 }
 
 export class ExpressionBuilder<
-  TTable extends string,
   TSchema extends FullSchema,
+  TTable extends keyof TSchema['tables'] & string,
 > {
   readonly #exists: (
     relationship: string,
@@ -125,7 +125,7 @@ export class ExpressionBuilder<
     relationship: TRelationship,
     cb: (
       query: Query<TSchema, DestTableName<TTable, TSchema, TRelationship>>,
-    ) => Query<TSchema, TTable>,
+    ) => Query<TSchema, string>,
   ): Condition;
   exists(
     relationship: string,

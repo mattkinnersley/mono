@@ -1,3 +1,4 @@
+import type {ReadonlyJSONValue} from '../../../shared/src/json.js';
 import type {PrimaryKey} from '../../../zero-protocol/src/primary-key.js';
 import type {SchemaValue, TableSchema} from '../table-schema.js';
 
@@ -34,7 +35,7 @@ export function boolean<T extends boolean = boolean>() {
   });
 }
 
-export function json<T = any>() {
+export function json<T extends ReadonlyJSONValue = ReadonlyJSONValue>() {
   return new ColumnBuilder({
     type: 'json',
     optional: false,
