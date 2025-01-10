@@ -73,11 +73,15 @@ type AddSubreturn<
 > = undefined extends TExistingReturn
   ?
       | (Exclude<TExistingReturn, undefined> & {
-          readonly [K in TAs]: TSubselectReturn;
+          readonly [K in TAs]: undefined extends TSubselectReturn
+            ? TSubselectReturn
+            : readonly TSubselectReturn[];
         })
       | undefined
   : TExistingReturn & {
-      readonly [K in TAs]: TSubselectReturn;
+      readonly [K in TAs]: undefined extends TSubselectReturn
+        ? TSubselectReturn
+        : readonly TSubselectReturn[];
     };
 
 export type PullTableSchema<
@@ -117,13 +121,13 @@ export interface Query<
     TTable,
     AddSubreturn<
       TReturn,
-      readonly DestRow<TTable, TSchema, TRelationship>[],
+      DestRow<TTable, TSchema, TRelationship>,
       TRelationship
     >
   >;
   related<
     TRelationship extends AvailableRelationships<TTable, TSchema>,
-    TSub extends Query<TSchema, string>,
+    TSub extends Query<TSchema, string, any>,
   >(
     relationship: TRelationship,
     cb: (
@@ -135,7 +139,7 @@ export interface Query<
     AddSubreturn<
       TReturn,
       TSub extends Query<TSchema, string, infer TSubReturn>
-        ? TSubReturn[]
+        ? TSubReturn
         : never,
       TRelationship
     >

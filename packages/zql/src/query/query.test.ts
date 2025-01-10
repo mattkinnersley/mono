@@ -386,7 +386,7 @@ describe('types', () => {
     >();
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const q2_2 = mockQuery as unknown as Query<TestSchemaWithRelationships>;
+    const q2_2 = mockQuery as unknown as Query<Schema, 'testWithRelationships'>;
     expectTypeOf(
       q2_2.related('test', t => t.one()).materialize().data,
     ).toMatchTypeOf<
