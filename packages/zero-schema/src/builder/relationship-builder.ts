@@ -35,15 +35,15 @@ export function relationships<
     many: <
       TDests extends TableSchema[],
       TSourceFields extends {
-        [K in keyof TDests]: keyof PreviousSchema<
+        [K in keyof TDests]: (keyof PreviousSchema<
           TSource,
           K & number,
           TDests
         >['columns'] &
-          string;
+          string)[];
       },
       TDestFields extends {
-        [K in keyof TDests]: keyof TDests[K]['columns'] & string;
+        [K in keyof TDests]: (keyof TDests[K]['columns'] & string)[];
       },
     >(
       ...args: {
@@ -77,3 +77,18 @@ function many(
     destSchema: arg.destSchema.build(),
   }));
 }
+
+// class RelationshipBuilder<TShape extends Relationship> {
+//   readonly #shape: TShape;
+//   constructor(shape: TShape) {
+//     this.#shape = shape;
+//   }
+
+//   many() {}
+
+//   one() {}
+
+//   build() {
+//     return this.#shape;
+//   }
+// }

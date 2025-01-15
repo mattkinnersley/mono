@@ -41,19 +41,19 @@ test('building a schema', () => {
 
   const issueRelationships = relationships(issue, many => ({
     owner: many({
-      sourceField: 'ownerId',
-      destField: 'id',
+      sourceField: ['ownerId'],
+      destField: ['id'],
       destSchema: user,
     }),
     labels: many(
       {
-        sourceField: 'id',
-        destField: 'issueId',
+        sourceField: ['id'],
+        destField: ['issueId'],
         destSchema: issueLabel,
       },
       {
-        sourceField: 'labelId',
-        destField: 'id',
+        sourceField: ['labelId'],
+        destField: ['id'],
         destSchema: label,
       },
     ),
@@ -61,8 +61,8 @@ test('building a schema', () => {
 
   const userRelationships = relationships(user, many => ({
     recruiter: many({
-      sourceField: 'id',
-      destField: 'recruiterId',
+      sourceField: ['id'],
+      destField: ['recruiterId'],
       destSchema: user,
     }),
   }));
@@ -70,13 +70,13 @@ test('building a schema', () => {
   const labelRelationships = relationships(label, many => ({
     issues: many(
       {
-        sourceField: 'id',
-        destField: 'labelId',
+        sourceField: ['id'],
+        destField: ['labelId'],
         destSchema: issueLabel,
       },
       {
-        sourceField: 'issueId',
-        destField: 'id',
+        sourceField: ['issueId'],
+        destField: ['id'],
         destSchema: issue,
       },
     ),

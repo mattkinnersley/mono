@@ -83,8 +83,8 @@ export type SchemaValueToTSType<T extends SchemaValue | ValueType> =
     : TypeNameToTypeMap[ColumnTypeName<T>];
 
 type Connection = {
-  readonly sourceField: string;
-  readonly destField: string;
+  readonly sourceField: string[];
+  readonly destField: string[];
   readonly destSchema: TableSchema;
 };
 export type Relationship =
