@@ -12,7 +12,6 @@ import type {
   System,
 } from '../../../zero-protocol/src/ast.js';
 import type {Row as IVMRow} from '../../../zero-protocol/src/data.js';
-import {type NormalizedTableSchema} from '../../../zero-schema/src/normalize-table-schema.js';
 import {
   isOneHop,
   type FullSchema,
@@ -36,7 +35,6 @@ import type {
   Operator,
   PullRow,
   Query,
-  Row,
 } from './query.js';
 import type {TypedView} from './typed-view.js';
 
@@ -50,19 +48,20 @@ export function newQuery<
   schema: TSchema,
   table: TTable,
 ): Query<TSchema, TTable> {
-  return new QueryImpl(delegate, schema);
+  return new QueryImpl(delegate, schema, table);
 }
 
 function newQueryWithDetails<
-  TTable extends keyof FullSchema['tables'] & string,
   TSchema extends FullSchema,
+  TTable extends keyof FullSchema['tables'] & string,
 >(
   delegate: QueryDelegate,
-  schema: NormalizedTableSchema,
+  schema: TSchema,
+  tableName: TTable,
   ast: AST,
   format: Format | undefined,
-): Query<TTable, TSchema> {
-  return new QueryImpl(delegate, schema, ast, format);
+): Query<TSchema, TTable> {
+  return new QueryImpl(delegate, schema, tableName, ast, format);
 }
 
 export type CommitListener = () => void;
@@ -169,7 +168,7 @@ export abstract class AbstractQuery<
     const related = this.#schema.relationships[this.#tableName][relationship];
     assert(related, 'Invalid relationship');
     if (isOneHop(related)) {
-      const {destSchema} = related[0];
+      const {destSchema, destField, sourceField} = related[0];
       const sq = cb(
         this._newQuery(
           this.#schema,
@@ -192,8 +191,8 @@ export abstract class AbstractQuery<
             {
               system: this._system,
               correlation: {
-                parentField: related.sourceField,
-                childField: related.destField,
+                parentField: sourceField,
+                childField: destField,
               },
               subquery: addPrimaryKeysToAst(destSchema, sq.#ast),
             },
@@ -483,19 +482,21 @@ export const astForTestingSymbol = Symbol();
 export const completedAstSymbol = Symbol();
 
 export class QueryImpl<
-  TSchema extends TableSchema,
-  TReturn extends QueryType = DefaultQueryResultRow<TSchema>,
-> extends AbstractQuery<TSchema, TReturn> {
+  TSchema extends FullSchema,
+  TTable extends keyof TSchema['tables'] & string,
+  TReturn = PullRow<TTable, TSchema>,
+> extends AbstractQuery<TSchema, TTable, TReturn> {
   readonly #delegate: QueryDelegate;
   readonly #ast: AST;
 
   constructor(
     delegate: QueryDelegate,
-    schema: NormalizedTableSchema,
-    ast: AST = {table: schema.tableName},
+    schema: TSchema,
+    tableName: TTable,
+    ast: AST = {table: tableName},
     format?: Format | undefined,
   ) {
-    super(schema, ast, format);
+    super(schema, tableName, ast, format);
     this.#delegate = delegate;
     this.#ast = ast;
   }

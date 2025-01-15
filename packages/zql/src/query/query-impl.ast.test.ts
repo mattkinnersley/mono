@@ -1,5 +1,8 @@
 import {describe, expect, test} from 'vitest';
-import type {TableSchema} from '../../../zero-schema/src/table-schema.js';
+import type {
+  FullSchema,
+  TableSchema,
+} from '../../../zero-schema/src/table-schema.js';
 import type {ExpressionFactory} from './expression.js';
 import {
   astForTestingSymbol,
@@ -7,13 +10,13 @@ import {
   QueryImpl,
   type QueryDelegate,
 } from './query-impl.js';
-import type {Query, QueryType} from './query.js';
+import type {Query} from './query.js';
 import {issueSchema} from './test/testSchemas.js';
 
 const mockDelegate = {} as QueryDelegate;
 
-function ast(q: Query<TableSchema, QueryType>) {
-  return (q as QueryImpl<TableSchema, QueryType>)[astForTestingSymbol];
+function ast(q: Query<FullSchema, string>) {
+  return (q as QueryImpl<FullSchema, string>)[astForTestingSymbol];
 }
 
 describe('building the AST', () => {
