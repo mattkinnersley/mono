@@ -39,13 +39,14 @@ test('building a schema', () => {
     })
     .primaryKey('id');
 
-  const issueRelationships = relationships(issue, many => ({
-    owner: many({
+  const issueRelationships = relationships(issue)
+    .many('owner', {
       sourceField: ['ownerId'],
       destField: ['id'],
       destSchema: user,
-    }),
-    labels: many(
+    })
+    .many(
+      'labels',
       {
         sourceField: ['id'],
         destField: ['issueId'],
@@ -56,19 +57,20 @@ test('building a schema', () => {
         destField: ['id'],
         destSchema: label,
       },
-    ),
-  }));
+    )
+    .build();
 
-  const userRelationships = relationships(user, many => ({
-    recruiter: many({
+  const userRelationships = relationships(user)
+    .many('recruiter', {
       sourceField: ['id'],
       destField: ['recruiterId'],
       destSchema: user,
-    }),
-  }));
+    })
+    .build();
 
-  const labelRelationships = relationships(label, many => ({
-    issues: many(
+  const labelRelationships = relationships(label)
+    .many(
+      'issues',
       {
         sourceField: ['id'],
         destField: ['labelId'],
@@ -79,8 +81,8 @@ test('building a schema', () => {
         destField: ['id'],
         destSchema: issue,
       },
-    ),
-  }));
+    )
+    .build();
 
   const schema = createSchema(
     {user, issue, issueLabel, label},

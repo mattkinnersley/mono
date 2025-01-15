@@ -26,46 +26,76 @@ export type Relationships = {
   relationships: Record<string, Relationship>;
 };
 
-export function relationships<
-  TSource extends TableSchema,
-  TRelationships extends Record<string, Relationship>,
->(
+export function relationships<TSource extends TableSchema>(
   table: TableBuilderWithColumns<TSource>,
-  cb: (
-    many: <
-      TDests extends TableSchema[],
-      TSourceFields extends {
-        [K in keyof TDests]: (keyof PreviousSchema<
-          TSource,
-          K & number,
-          TDests
-        >['columns'] &
-          string)[];
-      },
-      TDestFields extends {
-        [K in keyof TDests]: (keyof TDests[K]['columns'] & string)[];
-      },
-    >(
-      ...args: {
-        [K in keyof TDests]: ConnectArg<
-          TSourceFields[K],
-          TDestFields[K],
-          TDests[K]
-        >;
-      }
-    ) => {
-      [K in keyof TDests]: ConnectResult<
+): RelationshipsBuilder<
+  {name: TSource['name']; relationships: Record<string, Relationship>},
+  TSource
+> {
+  return new RelationshipsBuilder({
+    name: table.build().name,
+    relationships: {},
+  });
+}
+
+class RelationshipsBuilder<
+  TShape extends {name: string; relationships: Record<string, Relationship>},
+  TSource extends TableSchema,
+> {
+  readonly #shape: TShape;
+  constructor(shape: TShape) {
+    this.#shape = shape;
+  }
+
+  many<
+    TName extends string,
+    TDests extends TableSchema[],
+    TSourceFields extends {
+      [K in keyof TDests]: (keyof PreviousSchema<
+        TSource,
+        K & number,
+        TDests
+      >['columns'] &
+        string)[];
+    },
+    TDestFields extends {
+      [K in keyof TDests]: (keyof TDests[K]['columns'] & string)[];
+    },
+  >(
+    name: TName,
+    ...args: {
+      [K in keyof TDests]: ConnectArg<
         TSourceFields[K],
         TDestFields[K],
         TDests[K]
       >;
+    }
+  ): RelationshipsBuilder<
+    {
+      name: TShape['name'];
+      relationships: Omit<TShape['relationships'], TName> & {
+        [K in TName]: {
+          [K in keyof TDests]: ConnectResult<
+            TSourceFields[K],
+            TDestFields[K],
+            TDests[K]
+          >;
+        };
+      };
     },
-  ) => TRelationships,
-): {name: TSource['name']; relationships: TRelationships} {
-  return {
-    name: table.build().name,
-    relationships: cb(many as any),
-  };
+    TSource
+  > {
+    return {
+      ...this.#shape,
+      [name]: many(args),
+    } as any;
+  }
+
+  one() {}
+
+  build() {
+    return this.#shape;
+  }
 }
 
 function many(
@@ -77,18 +107,3 @@ function many(
     destSchema: arg.destSchema.build(),
   }));
 }
-
-// class RelationshipBuilder<TShape extends Relationship> {
-//   readonly #shape: TShape;
-//   constructor(shape: TShape) {
-//     this.#shape = shape;
-//   }
-
-//   many() {}
-
-//   one() {}
-
-//   build() {
-//     return this.#shape;
-//   }
-// }
