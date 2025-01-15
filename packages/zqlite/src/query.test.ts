@@ -127,7 +127,7 @@ test('row type', () => {
   const query = newQuery(queryDelegate, schema, 'issue')
     .whereExists('labels', q => q.where('name', '=', 'bug'))
     .related('labels');
-  type RT = ReturnType<typeof query.run>[0];
+  type RT = ReturnType<typeof query.run>;
   expectTypeOf<RT>().toEqualTypeOf<{
     readonly id: string;
     readonly title: string;

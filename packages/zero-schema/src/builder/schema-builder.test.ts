@@ -2,7 +2,7 @@
  * Relationships as secondary.
  */
 
-import {test} from 'vitest';
+import {expectTypeOf, test} from 'vitest';
 import {table, number, string} from './table-builder.js';
 import {relationships} from './relationship-builder.js';
 import type {Query} from '../../../zql/src/query/query.js';
@@ -93,10 +93,49 @@ test('building a schema', () => {
 
   const q = {} as Query<typeof schema, 'user'>;
   const iq = {} as Query<typeof schema, 'issue'>;
-  const r = q.related('recruiter', q => q.related('recruiter')).run();
+  const r = q
+    .related('recruiter', q => q.related('recruiter', q => q.one()).one())
+    .run();
+  expectTypeOf(r).toEqualTypeOf<{
+    readonly id: string;
+    readonly name: string;
+    readonly recruiterId: number;
+    readonly recruiter:
+      | {
+          readonly id: string;
+          readonly name: string;
+          readonly recruiterId: number;
+          readonly recruiter:
+            | {
+                readonly id: string;
+                readonly name: string;
+                readonly recruiterId: number;
+              }
+            | undefined;
+        }
+      | undefined;
+  }>();
 
   const id = iq.related('labels').run();
+  expectTypeOf(id).toEqualTypeOf<{
+    readonly id: string;
+    readonly title: string;
+    readonly ownerId: number;
+    readonly labels: readonly {
+      readonly id: number;
+      readonly name: string;
+    }[];
+  }>();
 
   const lq = {} as Query<typeof schema, 'label'>;
   const ld = lq.related('issues').run();
+  expectTypeOf(ld).toEqualTypeOf<{
+    readonly id: number;
+    readonly name: string;
+    readonly issues: readonly {
+      readonly id: string;
+      readonly title: string;
+      readonly ownerId: number;
+    }[];
+  }>();
 });

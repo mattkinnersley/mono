@@ -18,7 +18,7 @@ export type NoJsonSelector<T extends TableSchema> = Exclude<
 type JsonSelectors<E extends TableSchema> = {
   [K in keyof E['columns']]: E['columns'][K] extends {type: 'json'} ? K : never;
 }[keyof E['columns']];
-import type {Expand} from '../../../shared/src/expand.js';
+import type {ExpandRecursive} from '../../../shared/src/expand.js';
 
 export type Operator =
   | '='
@@ -199,8 +199,7 @@ export interface Query<
 
   materialize(): TypedView<HumanReadable<TReturn>>;
 
-  // Not a recursive expand as opaque types are expanded incorrectly and this seems impossible to address.
-  run(): HumanReadable<TReturn>;
+  run(): ExpandRecursive<TReturn>;
 
   preload(): {
     cleanup: () => void;
@@ -208,4 +207,7 @@ export interface Query<
   };
 }
 
-export type HumanReadable<T> = undefined extends T ? Expand<T> : Expand<T>[];
+// Note: opaque types expand incorrectly.
+export type HumanReadable<T> = undefined extends T
+  ? ExpandRecursive<T>
+  : ExpandRecursive<T>[];
