@@ -140,4 +140,6 @@ test('building a schema', () => {
       readonly ownerId: number;
     }[];
   }>();
+
+  lq.whereExists('issues', q => q.where('title', '=', 'foo')).run();
 });

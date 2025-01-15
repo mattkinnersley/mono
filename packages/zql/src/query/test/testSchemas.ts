@@ -63,84 +63,81 @@ const revision = table('revision')
   })
   .primaryKey('id');
 
-const issueRelationships = relationships(issue, connect => ({
-  owner: connect({
-    sourceField: 'ownerId',
-    destField: 'id',
+const issueRelationships = relationships(issue)
+  .many('owner', {
+    sourceField: ['ownerId'],
+    destField: ['id'],
     destSchema: user,
-  }),
-  comments: connect({
-    sourceField: 'id',
-    destField: 'issueId',
-    destSchema: comment,
-  }),
-  labels: connect(
+  })
+  .many(
+    'labels',
     {
-      sourceField: 'id',
-      destField: 'issueId',
+      sourceField: ['id'],
+      destField: ['issueId'],
       destSchema: issueLabel,
     },
     {
-      sourceField: 'labelId',
-      destField: 'id',
+      sourceField: ['labelId'],
+      destField: ['id'],
       destSchema: label,
     },
-  ),
-}));
+  )
+  .build();
 
-const userRelationships = relationships(user, connect => ({
-  issues: connect({
-    sourceField: 'id',
-    destField: 'ownerId',
+const userRelationships = relationships(user)
+  .many('issues', {
+    sourceField: ['id'],
+    destField: ['ownerId'],
     destSchema: issue,
-  }),
-}));
+  })
+  .build();
 
-const commentRelationships = relationships(comment, connect => ({
-  issue: connect({
-    sourceField: 'issueId',
-    destField: 'id',
+const commentRelationships = relationships(comment)
+  .many('issue', {
+    sourceField: ['issueId'],
+    destField: ['id'],
     destSchema: issue,
-  }),
-  revisions: connect({
-    sourceField: 'id',
-    destField: 'commentId',
+  })
+  .many('revisions', {
+    sourceField: ['id'],
+    destField: ['commentId'],
     destSchema: revision,
-  }),
-  author: connect({
-    sourceField: 'authorId',
-    destField: 'id',
+  })
+  .many('author', {
+    sourceField: ['authorId'],
+    destField: ['id'],
     destSchema: user,
-  }),
-}));
+  })
+  .build();
 
-const revisionRelationships = relationships(revision, connect => ({
-  comment: connect({
-    sourceField: 'commentId',
-    destField: 'id',
+const revisionRelationships = relationships(revision)
+  .many('comment', {
+    sourceField: ['commentId'],
+    destField: ['id'],
     destSchema: comment,
-  }),
-  author: connect({
-    sourceField: 'authorId',
-    destField: 'id',
+  })
+  .many('author', {
+    sourceField: ['authorId'],
+    destField: ['id'],
     destSchema: user,
-  }),
-}));
+  })
+  .build();
 
-const labelRelationships = relationships(label, connect => ({
-  issues: connect(
+const labelRelationships = relationships(label)
+  .many(
+    'issues',
     {
-      sourceField: 'id',
-      destField: 'labelId',
+      sourceField: ['id'],
+      destField: ['labelId'],
       destSchema: issueLabel,
     },
     {
-      sourceField: 'issueId',
-      destField: 'id',
+      sourceField: ['issueId'],
+      destField: ['id'],
       destSchema: issue,
     },
-  ),
-}));
+  )
+  .build();
 
 export const schema = createSchema(
   {
