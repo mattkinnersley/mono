@@ -81,16 +81,13 @@ const issueRelationships = relationships(issue)
       destField: ['id'],
       destSchema: label,
     },
-  )
-  .build();
+  );
 
-const userRelationships = relationships(user)
-  .many('issues', {
-    sourceField: ['id'],
-    destField: ['ownerId'],
-    destSchema: issue,
-  })
-  .build();
+const userRelationships = relationships(user).many('issues', {
+  sourceField: ['id'],
+  destField: ['ownerId'],
+  destSchema: issue,
+});
 
 const commentRelationships = relationships(comment)
   .many('issue', {
@@ -107,8 +104,7 @@ const commentRelationships = relationships(comment)
     sourceField: ['authorId'],
     destField: ['id'],
     destSchema: user,
-  })
-  .build();
+  });
 
 const revisionRelationships = relationships(revision)
   .many('comment', {
@@ -120,24 +116,21 @@ const revisionRelationships = relationships(revision)
     sourceField: ['authorId'],
     destField: ['id'],
     destSchema: user,
-  })
-  .build();
+  });
 
-const labelRelationships = relationships(label)
-  .many(
-    'issues',
-    {
-      sourceField: ['id'],
-      destField: ['labelId'],
-      destSchema: issueLabel,
-    },
-    {
-      sourceField: ['issueId'],
-      destField: ['id'],
-      destSchema: issue,
-    },
-  )
-  .build();
+const labelRelationships = relationships(label).many(
+  'issues',
+  {
+    sourceField: ['id'],
+    destField: ['labelId'],
+    destSchema: issueLabel,
+  },
+  {
+    sourceField: ['issueId'],
+    destField: ['id'],
+    destSchema: issue,
+  },
+);
 
 export const schema = createSchema(
   {

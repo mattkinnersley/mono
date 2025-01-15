@@ -38,8 +38,12 @@ export function relationships<TSource extends TableSchema>(
   });
 }
 
-class RelationshipsBuilder<
-  TShape extends {name: string; relationships: Record<string, Relationship>},
+export type TableRelationships = {
+  name: string;
+  relationships: Record<string, Relationship>;
+};
+export class RelationshipsBuilder<
+  TShape extends TableRelationships,
   TSource extends TableSchema,
 > {
   readonly #shape: TShape;
@@ -94,6 +98,10 @@ class RelationshipsBuilder<
   one() {}
 
   build() {
+    return this.#shape;
+  }
+
+  get schema() {
     return this.#shape;
   }
 }

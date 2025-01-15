@@ -1,11 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type {Relationship, TableSchema} from '../table-schema.js';
-import type {Relationships} from './relationship-builder.js';
+import type {
+  RelationshipsBuilder,
+  TableRelationships,
+} from './relationship-builder.js';
 import type {TableBuilderWithColumns} from './table-builder.js';
 
 export function createSchema<
   TTables extends Record<string, TableBuilderWithColumns<TableSchema>>,
-  TRelationships extends Record<string, Relationships>,
+  TRelationships extends Record<
+    string,
+    RelationshipsBuilder<TableRelationships, TableSchema>
+  >,
 >(
   tables: TTables,
   relationships: TRelationships,
@@ -14,7 +20,7 @@ export function createSchema<
     [K in keyof TTables as TTables[K]['schema']['name']]: TTables[K]['schema'];
   };
   relationships: {
-    [K in keyof TRelationships as TRelationships[K]['name']]: TRelationships[K]['relationships'];
+    [K in keyof TRelationships as TRelationships[K]['schema']['name']]: TRelationships[K]['schema']['relationships'];
   };
 } {
   const retTables: Record<string, TableSchema> = {};
@@ -24,7 +30,8 @@ export function createSchema<
     retTables[table.schema.name] = table.schema;
   });
   Object.values(relationships).forEach(relationship => {
-    retRelationships[relationship.name] = relationship.relationships;
+    retRelationships[relationship.schema.name] =
+      relationship.schema.relationships;
   });
 
   return {

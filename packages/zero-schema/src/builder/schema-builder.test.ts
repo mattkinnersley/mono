@@ -57,32 +57,27 @@ test('building a schema', () => {
         destField: ['id'],
         destSchema: label,
       },
-    )
-    .build();
+    );
 
-  const userRelationships = relationships(user)
-    .many('recruiter', {
+  const userRelationships = relationships(user).many('recruiter', {
+    sourceField: ['id'],
+    destField: ['recruiterId'],
+    destSchema: user,
+  });
+
+  const labelRelationships = relationships(label).many(
+    'issues',
+    {
       sourceField: ['id'],
-      destField: ['recruiterId'],
-      destSchema: user,
-    })
-    .build();
-
-  const labelRelationships = relationships(label)
-    .many(
-      'issues',
-      {
-        sourceField: ['id'],
-        destField: ['labelId'],
-        destSchema: issueLabel,
-      },
-      {
-        sourceField: ['issueId'],
-        destField: ['id'],
-        destSchema: issue,
-      },
-    )
-    .build();
+      destField: ['labelId'],
+      destSchema: issueLabel,
+    },
+    {
+      sourceField: ['issueId'],
+      destField: ['id'],
+      destSchema: issue,
+    },
+  );
 
   const schema = createSchema(
     {user, issue, issueLabel, label},
