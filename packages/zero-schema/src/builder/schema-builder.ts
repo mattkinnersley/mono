@@ -32,30 +32,46 @@ export type Schema = {
  * do not require bumping the schema version.
  */
 export function createSchema<
-  TTables extends Record<string, TableBuilderWithColumns<TableSchema>>,
-  TRelationships extends Record<string, Relationships>,
+  const TTablesOrRelationships extends readonly (
+    | TableBuilderWithColumns<TableSchema>
+    | Relationships
+  )[],
 >(
   version: number,
-  tables: TTables,
-  relationships?: TRelationships | undefined,
+  tablesOrRelationships: TTablesOrRelationships,
 ): {
   version: number;
   tables: {
-    [K in keyof TTables as TTables[K]['schema']['name']]: TTables[K]['schema'];
+    [K in keyof TTablesOrRelationships as TTablesOrRelationships[K] extends TableBuilderWithColumns<TableSchema>
+      ? TTablesOrRelationships[K]['schema']['name']
+      : never]: TTablesOrRelationships[K] extends TableBuilderWithColumns<TableSchema>
+      ? TTablesOrRelationships[K]['schema']
+      : never;
   };
   relationships: {
-    [K in keyof TRelationships as TRelationships[K]['name']]: TRelationships[K]['relationships'];
+    [K in keyof TTablesOrRelationships as TTablesOrRelationships[K] extends Relationships
+      ? TTablesOrRelationships[K]['name']
+      : never]: TTablesOrRelationships[K] extends Relationships
+      ? TTablesOrRelationships[K]['relationships']
+      : never;
   };
 } {
   const retTables: Record<string, TableSchema> = {};
   const retRelationships: Record<string, Record<string, Relationship>> = {};
 
-  Object.values(tables).forEach(table => {
-    retTables[table.schema.name] = table.build();
-  });
-  Object.values(relationships ?? {}).forEach(relationship => {
-    retRelationships[relationship.name] = relationship.relationships;
-    checkRelationship(relationship.relationships, relationship.name, retTables);
+  tablesOrRelationships.forEach(tableOrRelationships => {
+    if ('schema' in tableOrRelationships) {
+      retTables[tableOrRelationships.schema.name] =
+        tableOrRelationships.build();
+    } else {
+      retRelationships[tableOrRelationships.name] =
+        tableOrRelationships.relationships;
+      checkRelationship(
+        tableOrRelationships.relationships,
+        tableOrRelationships.name,
+        retTables,
+      );
+    }
   });
 
   return {

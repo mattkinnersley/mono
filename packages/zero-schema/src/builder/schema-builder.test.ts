@@ -118,15 +118,15 @@ test('building a schema', () => {
     ),
   }));
 
-  const schema = createSchema(
-    1,
-    {user, issue, issueLabel, label},
-    {
-      userRelationships,
-      issueRelationships,
-      labelRelationships,
-    },
-  );
+  const schema = createSchema(1, [
+    user,
+    issue,
+    issueLabel,
+    label,
+    userRelationships,
+    issueRelationships,
+    labelRelationships,
+  ]);
 
   const q = mockQuery as unknown as Query<typeof schema, 'user'>;
   const iq = mockQuery as unknown as Query<typeof schema, 'issue'>;
