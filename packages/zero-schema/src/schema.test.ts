@@ -50,7 +50,7 @@ test('Missing table in direct relationship should throw', () => {
   }));
 
   expect(() =>
-    createSchema(1, {foo}, {fooRelationships}),
+    createSchema(1, [foo fooRelationships]),
   ).toThrowErrorMatchingInlineSnapshot(
     `[Error: For relationship "foo"."barRelation", destination table "bar" is missing in the schema]`,
   );
@@ -102,10 +102,7 @@ test('Missing table in junction relationship should throw', () => {
   }));
 
   expect(() =>
-    createSchema(
-      1,
-      {tableB, tableC},
-      {tableBRelationships, tableCRelationships},
+    createSchema(1, [tableB, tableC tableBRelationships, tableCRelationships],
     ),
   ).toThrowErrorMatchingInlineSnapshot(
     `[Error: For relationship "tableB"."relationBToA", destination table "tableA" is missing in the schema]`,
@@ -159,7 +156,7 @@ test('Missing column in direct relationship source should throw', () => {
   }));
 
   expect(() =>
-    createSchema(1, {bar, foo}, {fooRelationships}),
+    createSchema(1, [bar, foo fooRelationships]),
   ).toThrowErrorMatchingInlineSnapshot(
     `[Error: For relationship "foo"."barRelation", the source field "missing" is missing in the table schema "foo"]`,
   );
@@ -240,7 +237,7 @@ test('Missing column in junction relationship source should throw', () => {
   }));
 
   expect(() =>
-    createSchema(1, {tableA, tableB, junctionTable}, {tableARelationships}),
+    createSchema(1, [tableA, tableB, junctionTable tableARelationships]),
   ).toThrowErrorMatchingInlineSnapshot(
     `[Error: For relationship "tableA"."relationAToB", the source field "missing" is missing in the table schema "junctionTable"]`,
   );

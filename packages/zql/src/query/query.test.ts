@@ -164,22 +164,19 @@ const testWithMoreRelationshipsRelationships = relationships(
   }),
 );
 
-const schema = createSchema(
-  1,
-  {
+const schema = createSchema(1, [
     testSchema,
     schemaWithEnums,
     schemaWithJson,
     schemaWithAdvancedTypes,
     testWithRelationships,
     testWithMoreRelationships,
-  },
-  {
+   
     testWithRelationshipsRelationships,
     testWithMoreRelationshipsRelationships,
     withAdvancedTypesRelationships,
     schemaWithEnumsRelationships,
-  },
+  ],
 );
 
 type Schema = typeof schema;
@@ -599,15 +596,12 @@ describe('schema structure', () => {
       }),
     }));
 
-    const schema = createSchema(
-      1,
-      {
+    const schema = createSchema(1, [
         comment,
         issue,
-      },
-      {
+       
         issueRelationships,
-      },
+      ],
     );
 
     takeSchema(schema.tables.issue);
@@ -651,10 +645,7 @@ describe('schema structure', () => {
       }),
     }));
 
-    const schema = createSchema(
-      1,
-      {issue, comment},
-      {issueRelationships, commentRelationships},
+    const schema = createSchema(1, [issue, comment issueRelationships, commentRelationships],
     );
     takeSchema(schema.tables.issue);
   });

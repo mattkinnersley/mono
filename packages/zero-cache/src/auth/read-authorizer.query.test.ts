@@ -266,28 +266,24 @@ type AuthData = {
   };
 };
 
-const schema = createSchema(
-  1,
-  {
-    user,
-    issue,
-    comment,
-    issueLabel,
-    label,
-    viewState,
-    project,
-    projectMember,
-  },
-  {
-    userRelationships,
-    issueRelationships,
-    commentRelationships,
-    issueLabelRelationships,
-    viewStateRelationships,
-    projectRelationships,
-    projectMemberRelationships,
-  },
-);
+const schema = createSchema(1, [
+  user,
+  issue,
+  comment,
+  issueLabel,
+  label,
+  viewState,
+  project,
+  projectMember,
+
+  userRelationships,
+  issueRelationships,
+  commentRelationships,
+  issueLabelRelationships,
+  viewStateRelationships,
+  projectRelationships,
+  projectMemberRelationships,
+]);
 
 type Schema = typeof schema;
 

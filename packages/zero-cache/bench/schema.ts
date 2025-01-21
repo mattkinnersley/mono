@@ -86,20 +86,16 @@ const commentRelationships = relationships(comment, connect => ({
   }),
 }));
 
-export const schema = createSchema(
-  1,
-  {
-    member,
-    issue,
-    comment,
-    label,
-    issueLabel,
-  },
-  {
-    issueRelationships,
-    commentRelationships,
-  },
-);
+export const schema = createSchema(1, [
+  member,
+  issue,
+  comment,
+  label,
+  issueLabel,
+
+  issueRelationships,
+  commentRelationships,
+]);
 
 type AppSchema = typeof schema;
 export type {AppSchema as Schema};

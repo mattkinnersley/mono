@@ -19,7 +19,7 @@ test('round trip', async () => {
       destSchema: circular,
     }),
   }));
-  const schema = createSchema(1, {circular}, {circularRelationships});
+  const schema = createSchema(1, [circular circularRelationships]);
 
   const schemaAndPermissions = {
     schema,
