@@ -1,0 +1,859 @@
+{
+  "permissions": {
+    "recording_set": {
+      "row": {
+        "select": [
+          [
+            "allow",
+            {
+              "type": "correlatedSubquery",
+              "related": {
+                "system": "permissions",
+                "correlation": {
+                  "parentField": [
+                    "location_id"
+                  ],
+                  "childField": [
+                    "id"
+                  ]
+                },
+                "subquery": {
+                  "table": "location",
+                  "alias": "zsubq_workspaceUsers",
+                  "orderBy": [
+                    [
+                      "id",
+                      "asc"
+                    ]
+                  ],
+                  "where": {
+                    "type": "correlatedSubquery",
+                    "related": {
+                      "system": "permissions",
+                      "correlation": {
+                        "parentField": [
+                          "workspace_id"
+                        ],
+                        "childField": [
+                          "workspace_id"
+                        ]
+                      },
+                      "subquery": {
+                        "table": "user_workspace",
+                        "alias": "zsubq_workspaceUsers",
+                        "where": {
+                          "type": "simple",
+                          "left": {
+                            "type": "column",
+                            "name": "user_id"
+                          },
+                          "right": {
+                            "type": "literal",
+                            "value": "018d36bd-4f47-731f-b132-34c5e331b3b0"
+                          },
+                          "op": "="
+                        },
+                        "orderBy": [
+                          [
+                            "id",
+                            "asc"
+                          ]
+                        ]
+                      }
+                    },
+                    "op": "EXISTS"
+                  }
+                }
+              },
+              "op": "EXISTS"
+            }
+          ]
+        ],
+        "insert": [],
+        "update": {
+          "preMutation": []
+        },
+        "delete": []
+      }
+    },
+    "user": {
+      "row": {
+        "insert": [],
+        "update": {
+          "preMutation": []
+        },
+        "delete": []
+      }
+    },
+    "workspace": {
+      "row": {
+        "select": [
+          [
+            "allow",
+            {
+              "type": "correlatedSubquery",
+              "related": {
+                "system": "permissions",
+                "correlation": {
+                  "parentField": [
+                    "id"
+                  ],
+                  "childField": [
+                    "workspace_id"
+                  ]
+                },
+                "subquery": {
+                  "table": "user_workspace",
+                  "alias": "zsubq_workspaceUsers",
+                  "where": {
+                    "type": "simple",
+                    "left": {
+                      "type": "column",
+                      "name": "user_id"
+                    },
+                    "right": {
+                      "type": "literal",
+                      "value": "018d36bd-4f47-731f-b132-34c5e331b3b0"
+                    },
+                    "op": "="
+                  },
+                  "orderBy": [
+                    [
+                      "id",
+                      "asc"
+                    ]
+                  ]
+                }
+              },
+              "op": "EXISTS"
+            }
+          ]
+        ],
+        "insert": [],
+        "update": {
+          "preMutation": []
+        },
+        "delete": []
+      }
+    },
+    "location": {
+      "row": {
+        "insert": [],
+        "update": {
+          "preMutation": []
+        },
+        "delete": []
+      }
+    },
+    "user_workspace": {
+      "row": {
+        "insert": [],
+        "update": {
+          "preMutation": []
+        },
+        "delete": []
+      }
+    },
+    "artist": {
+      "row": {
+        "insert": [],
+        "update": {
+          "preMutation": []
+        },
+        "delete": []
+      }
+    },
+    "recording_set_artist": {
+      "row": {
+        "insert": [],
+        "update": {
+          "preMutation": []
+        },
+        "delete": []
+      }
+    }
+  },
+  "schema": {
+    "version": 1,
+    "tables": {
+      "user": {
+        "name": "user",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "email": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "id"
+        ]
+      },
+      "artist": {
+        "name": "artist",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "name": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "id"
+        ]
+      },
+      "location": {
+        "name": "location",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "name": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "code": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "short_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "workspace_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "id"
+        ]
+      },
+      "workspace": {
+        "name": "workspace",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "name": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "type": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "id"
+        ]
+      },
+      "recording_set": {
+        "name": "recording_set",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "started_at": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "ended_at": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "location_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "short_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "duration": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "id"
+        ]
+      },
+      "recording_set_artist": {
+        "name": "recording_set_artist",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "recording_set_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "artist_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "id"
+        ]
+      },
+      "user_workspace": {
+        "name": "user_workspace",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "user_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "workspace_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "id"
+        ]
+      },
+      "recording_set_purchase": {
+        "name": "recording_set_purchase",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "artist_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "is_completed": {
+            "type": "boolean",
+            "optional": false,
+            "customType": null
+          },
+          "recording_set_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "location_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "price": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "currency": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "transfer_fee": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "vat_tax": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "post_tax_amount": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "venue_royalty": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "created_at": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "id"
+        ]
+      },
+      "recorder_config": {
+        "name": "recorder_config",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "location_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "recording_channels": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "recording_sample_rate": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "recording_bit_depth": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "recording_schedule": {
+            "type": "json",
+            "optional": false,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "id"
+        ]
+      },
+      "recorder_status": {
+        "name": "recorder_status",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "recorder_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "last_connected_at": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "is_online": {
+            "type": "boolean",
+            "optional": false,
+            "customType": null
+          },
+          "next_recording_at": {
+            "type": "number",
+            "optional": false,
+            "customType": null
+          },
+          "is_in_recording_window": {
+            "type": "boolean",
+            "optional": false,
+            "customType": null
+          },
+          "thing_group": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "software_version": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "wifi_name": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "is_wifi_connected": {
+            "type": "boolean",
+            "optional": false,
+            "customType": null
+          },
+          "is_ethernet_connected": {
+            "type": "boolean",
+            "optional": false,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "id"
+        ]
+      },
+      "recorder_soundcard": {
+        "name": "recorder_soundcard",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "recorder_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "model": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "serial_number": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "is_connected": {
+            "type": "boolean",
+            "optional": false,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "id"
+        ]
+      }
+    },
+    "relationships": {
+      "recorder_status": {
+        "recorder": [
+          {
+            "sourceField": [
+              "recorder_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "location",
+            "cardinality": "one"
+          }
+        ]
+      },
+      "recorder_config": {
+        "recorder": [
+          {
+            "sourceField": [
+              "location_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "location",
+            "cardinality": "one"
+          }
+        ]
+      },
+      "artist": {
+        "recordingSets": [
+          {
+            "sourceField": [
+              "id"
+            ],
+            "destField": [
+              "artist_id"
+            ],
+            "destSchema": "recording_set_artist",
+            "cardinality": "many"
+          },
+          {
+            "sourceField": [
+              "recording_set_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "recording_set",
+            "cardinality": "many"
+          }
+        ]
+      },
+      "recording_set_purchase": {
+        "artist": [
+          {
+            "sourceField": [
+              "artist_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "artist",
+            "cardinality": "one"
+          }
+        ],
+        "recordingSet": [
+          {
+            "sourceField": [
+              "recording_set_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "recording_set",
+            "cardinality": "one"
+          }
+        ],
+        "recorder": [
+          {
+            "sourceField": [
+              "location_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "location",
+            "cardinality": "one"
+          }
+        ],
+        "workspaceUsers": [
+          {
+            "sourceField": [
+              "location_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "location",
+            "cardinality": "many"
+          },
+          {
+            "sourceField": [
+              "workspace_id"
+            ],
+            "destField": [
+              "workspace_id"
+            ],
+            "destSchema": "user_workspace",
+            "cardinality": "many"
+          }
+        ]
+      },
+      "recording_set_artist": {
+        "artist": [
+          {
+            "sourceField": [
+              "artist_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "artist",
+            "cardinality": "one"
+          }
+        ],
+        "recordingSet": [
+          {
+            "sourceField": [
+              "recording_set_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "recording_set",
+            "cardinality": "one"
+          }
+        ]
+      },
+      "location": {
+        "workspaceUsers": [
+          {
+            "sourceField": [
+              "workspace_id"
+            ],
+            "destField": [
+              "workspace_id"
+            ],
+            "destSchema": "user_workspace",
+            "cardinality": "many"
+          }
+        ],
+        "soundcards": [
+          {
+            "sourceField": [
+              "id"
+            ],
+            "destField": [
+              "recorder_id"
+            ],
+            "destSchema": "recorder_soundcard",
+            "cardinality": "many"
+          }
+        ]
+      },
+      "workspace": {
+        "workspaceUsers": [
+          {
+            "sourceField": [
+              "id"
+            ],
+            "destField": [
+              "workspace_id"
+            ],
+            "destSchema": "user_workspace",
+            "cardinality": "many"
+          }
+        ]
+      },
+      "recording_set": {
+        "artists": [
+          {
+            "sourceField": [
+              "id"
+            ],
+            "destField": [
+              "recording_set_id"
+            ],
+            "destSchema": "recording_set_artist",
+            "cardinality": "many"
+          },
+          {
+            "sourceField": [
+              "artist_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "artist",
+            "cardinality": "many"
+          }
+        ],
+        "location": [
+          {
+            "sourceField": [
+              "location_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "location",
+            "cardinality": "one"
+          }
+        ],
+        "workspaceUsers": [
+          {
+            "sourceField": [
+              "location_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "location",
+            "cardinality": "many"
+          },
+          {
+            "sourceField": [
+              "workspace_id"
+            ],
+            "destField": [
+              "workspace_id"
+            ],
+            "destSchema": "user_workspace",
+            "cardinality": "many"
+          }
+        ],
+        "soundcards": [
+          {
+            "sourceField": [
+              "id"
+            ],
+            "destField": [
+              "recorder_id"
+            ],
+            "destSchema": "recorder_soundcard",
+            "cardinality": "many"
+          }
+        ]
+      },
+      "user_workspace": {
+        "user": [
+          {
+            "sourceField": [
+              "user_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "user",
+            "cardinality": "one"
+          }
+        ],
+        "workspace": [
+          {
+            "sourceField": [
+              "workspace_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "workspace",
+            "cardinality": "one"
+          }
+        ]
+      },
+      "recorder_soundcard": {
+        "workspaceUsers": [
+          {
+            "sourceField": [
+              "recorder_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "location",
+            "cardinality": "many"
+          },
+          {
+            "sourceField": [
+              "workspace_id"
+            ],
+            "destField": [
+              "workspace_id"
+            ],
+            "destSchema": "user_workspace",
+            "cardinality": "many"
+          }
+        ]
+      }
+    }
+  }
+}

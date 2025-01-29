@@ -1,0 +1,14 @@
+{
+  "name": "repro",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "zero": "npm run zero-build-schema && tsx ../../packages/zero-cache/src/server/multi/main.ts",
+    "zero-brk": "export SINGLE_PROCESS=1 && npm run zero-build-schema && tsx --inspect-brk ../../packages/zero-cache/src/server/multi/main.ts",
+    "transform-query": "npm run zero-build-schema && tsx ../../packages/zero-cache/src/scripts/transform-query.ts",
+    "run-query": "npm run zero-build-schema && tsx ../../packages/zero-cache/src/scripts/run-query.ts",
+    "run-query-brk": "npm run zero-build-schema && tsx --inspect-brk ../../packages/zero-cache/src/scripts/run-query.ts",
+    "zero-build-schema": "tsx ../../packages/zero-schema/src/build-schema.ts"
+  }
+}

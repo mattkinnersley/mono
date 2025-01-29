@@ -34,69 +34,74 @@ export type Relationships = {
   relationships: Record<string, Relationship>; // relationships for that table
 };
 
+export type RelationshipsCallback<
+  TRelationships extends Record<string, Relationship>,
+  TSource extends TableSchema = TableSchema,
+> = (connects: {
+  many: <
+    TDests extends TableSchema[],
+    TSourceFields extends {
+      [K in keyof TDests]: (keyof PreviousSchema<
+        TSource,
+        K & number,
+        TDests
+      >['columns'] &
+        string)[];
+    },
+    TDestFields extends {
+      [K in keyof TDests]: (keyof TDests[K]['columns'] & string)[];
+    },
+  >(
+    ...args: {
+      [K in keyof TDests]: ConnectArg<
+        TSourceFields[K],
+        TDestFields[K],
+        TDests[K]
+      >;
+    }
+  ) => {
+    [K in keyof TDests]: ManyConnection<
+      TSourceFields[K],
+      TDestFields[K],
+      TDests[K]
+    >;
+  };
+  one: <
+    TDests extends TableSchema[],
+    TSourceFields extends {
+      [K in keyof TDests]: (keyof PreviousSchema<
+        TSource,
+        K & number,
+        TDests
+      >['columns'] &
+        string)[];
+    },
+    TDestFields extends {
+      [K in keyof TDests]: (keyof TDests[K]['columns'] & string)[];
+    },
+  >(
+    ...args: {
+      [K in keyof TDests]: ConnectArg<
+        TSourceFields[K],
+        TDestFields[K],
+        TDests[K]
+      >;
+    }
+  ) => {
+    [K in keyof TDests]: OneConnection<
+      TSourceFields[K],
+      TDestFields[K],
+      TDests[K]
+    >;
+  };
+}) => TRelationships;
+
 export function relationships<
   TSource extends TableSchema,
   TRelationships extends Record<string, Relationship>,
 >(
   table: TableBuilderWithColumns<TSource>,
-  cb: (connects: {
-    many: <
-      TDests extends TableSchema[],
-      TSourceFields extends {
-        [K in keyof TDests]: (keyof PreviousSchema<
-          TSource,
-          K & number,
-          TDests
-        >['columns'] &
-          string)[];
-      },
-      TDestFields extends {
-        [K in keyof TDests]: (keyof TDests[K]['columns'] & string)[];
-      },
-    >(
-      ...args: {
-        [K in keyof TDests]: ConnectArg<
-          TSourceFields[K],
-          TDestFields[K],
-          TDests[K]
-        >;
-      }
-    ) => {
-      [K in keyof TDests]: ManyConnection<
-        TSourceFields[K],
-        TDestFields[K],
-        TDests[K]
-      >;
-    };
-    one: <
-      TDests extends TableSchema[],
-      TSourceFields extends {
-        [K in keyof TDests]: (keyof PreviousSchema<
-          TSource,
-          K & number,
-          TDests
-        >['columns'] &
-          string)[];
-      },
-      TDestFields extends {
-        [K in keyof TDests]: (keyof TDests[K]['columns'] & string)[];
-      },
-    >(
-      ...args: {
-        [K in keyof TDests]: ConnectArg<
-          TSourceFields[K],
-          TDestFields[K],
-          TDests[K]
-        >;
-      }
-    ) => {
-      [K in keyof TDests]: OneConnection<
-        TSourceFields[K],
-        TDestFields[K],
-        TDests[K]
-      >;
-    };
-  }) => TRelationships,
+  cb: RelationshipsCallback<TRelationships, TSource>,
 ): {name: TSource['name']; relationships: TRelationships} {
   const relationships = cb({many, one} as any);
 

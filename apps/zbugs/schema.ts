@@ -11,6 +11,7 @@ import {
   type Row,
 } from '@rocicorp/zero';
 import type {Condition} from 'zero-protocol/src/ast.js';
+import type {RelationshipsCallback} from '../../packages/zero-schema/src/builder/relationship-builder.ts';
 
 // Table definitions
 const user = table('user')
