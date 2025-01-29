@@ -111,6 +111,12 @@ import {
 import {getServer} from './server-option.ts';
 import {version} from './version.ts';
 import {PokeHandler} from './zero-poke-handler.ts';
+import {
+  makeReplicacheMutator,
+  type CustomMutatorDefs,
+  type CustomMutatorImpl,
+  type MakeCustomMutatorInterfaces,
+} from './custom.ts';
 
 type ConnectionState = Enum<typeof ConnectionState>;
 type PingResult = Enum<typeof PingResult>;
@@ -146,7 +152,10 @@ interface TestZero {
   }) => LogOptions;
 }
 
-function asTestZero<S extends Schema>(z: Zero<S>): TestZero {
+function asTestZero<
+  S extends Schema,
+  MD extends CustomMutatorDefs<S> | undefined,
+>(z: Zero<S, MD>): TestZero {
   return z as TestZero;
 }
 
@@ -237,7 +246,10 @@ export function getInternalReplicacheImplForTesting<
   return must(internalReplicacheImplMap.get(z)) as ReplicacheImpl<MD>;
 }
 
-export class Zero<const S extends Schema> {
+export class Zero<
+  const S extends Schema,
+  MD extends CustomMutatorDefs<S> | undefined = undefined,
+> {
   readonly version = version;
 
   readonly #rep: ReplicacheImpl<WithCRUD<MutatorDefs>>;
@@ -339,7 +351,7 @@ export class Zero<const S extends Schema> {
   // 2. client successfully connects
   #totalToConnectStart: number | undefined = undefined;
 
-  readonly #options: ZeroOptions<S>;
+  readonly #options: ZeroOptions<S, MD>;
 
   readonly query: MakeEntityQueriesFromSchema<S>;
 
@@ -354,7 +366,7 @@ export class Zero<const S extends Schema> {
   /**
    * Constructs a new Zero client.
    */
-  constructor(options: ZeroOptions<S>) {
+  constructor(options: ZeroOptions<S, MD>) {
     const {
       userID,
       storageKey,
@@ -393,8 +405,19 @@ export class Zero<const S extends Schema> {
     const logOptions = this.#logOptions;
 
     const replicacheMutators = {
-      ['_zero_crud']: makeCRUDMutator(schema),
+      [CRUD_MUTATION_NAME]: makeCRUDMutator(schema),
     };
+
+    for (const [namespace, mutatorsForNamespace] of Object.entries(
+      options.mutators ?? {},
+    )) {
+      for (const [name, mutator] of Object.entries(
+        mutatorsForNamespace as Record<string, CustomMutatorImpl<Schema>>,
+      )) {
+        (replicacheMutators as MutatorDefs)[customMutatorKey(namespace, name)] =
+          makeReplicacheMutator(mutator, schema);
+      }
+    }
 
     this.storageKey = storageKey ?? '';
 
@@ -461,7 +484,24 @@ export class Zero<const S extends Schema> {
     this.#onClientStateNotFound = onClientStateNotFoundCallback;
     this.#rep.onClientStateNotFound = onClientStateNotFoundCallback;
 
-    const {mutate, mutateBatch} = makeCRUDMutate<S>(schema, rep.mutate);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const {mutate, mutateBatch} = makeCRUDMutate<S>(schema, rep.mutate) as any;
+
+    for (const [namespace, mutatorsForNamespace] of Object.entries(
+      options.mutators ?? {},
+    )) {
+      let existing = mutate[namespace];
+      if (existing === undefined) {
+        existing = {};
+        mutate[namespace] = existing;
+      }
+
+      for (const name of Object.keys(
+        mutatorsForNamespace as Record<string, CustomMutatorImpl<Schema>>,
+      )) {
+        existing[name] = must(rep.mutate[customMutatorKey(namespace, name)]);
+      }
+    }
     this.mutate = mutate;
     this.mutateBatch = mutateBatch;
 
@@ -605,7 +645,9 @@ export class Zero<const S extends Schema> {
    * await zero.mutate.issue.update({id: '1', title: 'Updated title'});
    * ```
    */
-  readonly mutate: DBMutator<S>;
+  readonly mutate: MD extends CustomMutatorDefs<S>
+    ? DBMutator<S> & MakeCustomMutatorInterfaces<S, MD>
+    : DBMutator<S>;
 
   /**
    * Provides a way to batch multiple CRUD mutations together:
@@ -1691,3 +1733,7 @@ class TimedOutError extends Error {
 }
 
 class CloseError extends Error {}
+
+function customMutatorKey(namespace: string, name: string) {
+  return `${namespace}.${name}`;
+}

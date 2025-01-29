@@ -31,6 +31,7 @@ import {
   exposedToTestingSymbol,
   onSetConnectionStateSymbol,
 } from './zero.ts';
+import type {CustomMutatorDefs} from './custom.ts';
 
 type ConnectionState = Enum<typeof ConnectionState>;
 type ErrorKind = Enum<typeof ErrorKind>;
@@ -67,7 +68,10 @@ export class MockSocket extends EventTarget {
   }
 }
 
-export class TestZero<const S extends Schema> extends Zero<S> {
+export class TestZero<
+  const S extends Schema,
+  MD extends CustomMutatorDefs<S> = CustomMutatorDefs<S>,
+> extends Zero<S, MD> {
   #connectionStateResolvers: Set<{
     state: ConnectionState;
     resolve: (state: ConnectionState) => void;
@@ -204,10 +208,13 @@ declare const TESTING: boolean;
 
 let testZeroCounter = 0;
 
-export function zeroForTest<const S extends Schema>(
-  options: Partial<ZeroOptions<S>> = {},
+export function zeroForTest<
+  const S extends Schema,
+  MD extends CustomMutatorDefs<S> = CustomMutatorDefs<S>,
+>(
+  options: Partial<ZeroOptions<S, MD>> = {},
   errorOnUpdateNeeded = true,
-): TestZero<S> {
+): TestZero<S, MD> {
   // Special case kvStore. If not present we default to 'mem'. This allows
   // passing `undefined` to get the default behavior.
   const newOptions = {...options};
@@ -231,7 +238,7 @@ export function zeroForTest<const S extends Schema>(
         }
       : undefined,
     ...newOptions,
-  } satisfies ZeroOptions<S>);
+  } satisfies ZeroOptions<S, MD>);
 
   return r;
 }
