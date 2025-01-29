@@ -90,6 +90,17 @@ const userPref = table('userPref')
   })
   .primaryKey('userID', 'key');
 
+const commonRelationships = {
+  creator: [
+    {
+      sourceField: ['creatorID'],
+      destField: ['id'],
+      destSchema: 'user',
+      cardinality: 'one',
+    },
+  ],
+} as const;
+
 // Relationships
 const userRelationships = relationships(user, ({many}) => ({
   createdIssues: many({
@@ -100,6 +111,14 @@ const userRelationships = relationships(user, ({many}) => ({
 }));
 
 const issueRelationships = relationships(issue, ({many, one}) => ({
+  creator: [
+    {
+      sourceField: ['creatorID'],
+      destField: ['id'],
+      destSchema: 'user',
+      cardinality: 'one',
+    },
+  ],
   labels: many(
     {
       sourceField: ['id'],
@@ -116,11 +135,6 @@ const issueRelationships = relationships(issue, ({many, one}) => ({
     sourceField: ['id'],
     destField: ['issueID'],
     destSchema: comment,
-  }),
-  creator: one({
-    sourceField: ['creatorID'],
-    destField: ['id'],
-    destSchema: user,
   }),
   assignee: one({
     sourceField: ['assigneeID'],
