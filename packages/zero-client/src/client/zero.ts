@@ -1168,45 +1168,66 @@ export class Zero<
       req.mutations.length,
       'mutations.',
     );
+
+    const custom: CustomMutation[] = [];
     const now = Date.now();
+
     for (let i = start; i < req.mutations.length; i++) {
       const m = req.mutations[i];
       const timestamp = now - Math.round(performance.now() - m.timestamp);
-      const zeroM =
-        m.name === CRUD_MUTATION_NAME
-          ? ({
-              type: MutationType.CRUD,
-              timestamp,
-              id: m.id,
-              clientID: m.clientID,
-              name: m.name,
-              args: [m.args as CRUDMutationArg],
-            } satisfies CRUDMutation)
-          : ({
-              type: MutationType.Custom,
-              timestamp,
-              id: m.id,
-              clientID: m.clientID,
-              name: m.name,
-              args: [m.args],
-            } satisfies CustomMutation);
+      if (m.name !== CRUD_MUTATION_NAME) {
+        custom.push({
+          type: 'custom',
+          id: m.id,
+          clientID: m.clientID,
+          name: m.name,
+          args: [m.args],
+          timestamp,
+        });
+      } else {
+        const zeroM = {
+          type: MutationType.CRUD,
+          timestamp,
+          id: m.id,
+          clientID: m.clientID,
+          name: m.name,
+          args: [m.args as CRUDMutationArg],
+        } satisfies CRUDMutation;
+        const msg: PushMessage = [
+          'push',
+          {
+            timestamp: now,
+            clientGroupID: req.clientGroupID,
+            mutations: [zeroM],
+            pushVersion: req.pushVersion,
+            // Zero schema versions are always integers.
+            schemaVersion: parseInt(req.schemaVersion),
+            requestID,
+          },
+        ];
+        send(socket, msg);
+      }
+      if (!isMutationRecoveryPush) {
+        this.#lastMutationIDSent = {clientID: m.clientID, id: m.id};
+      }
+    }
+
+    if (custom.length > 0) {
       const msg: PushMessage = [
         'push',
         {
           timestamp: now,
           clientGroupID: req.clientGroupID,
-          mutations: [zeroM],
+          mutations: custom,
           pushVersion: req.pushVersion,
-          // Zero schema versions are always numbers.
+          // Zero schema versions are always integers.
           schemaVersion: parseInt(req.schemaVersion),
           requestID,
         },
       ];
       send(socket, msg);
-      if (!isMutationRecoveryPush) {
-        this.#lastMutationIDSent = {clientID: m.clientID, id: m.id};
-      }
     }
+
     return {
       httpRequestInfo: {
         errorMessage: '',
