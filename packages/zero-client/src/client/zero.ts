@@ -119,6 +119,7 @@ import {
   type CustomMutatorImpl,
   type MakeCustomMutatorInterfaces,
 } from './custom.ts';
+import {IVMSourceBranch} from './ivm-source-repo.ts';
 
 type ConnectionState = Enum<typeof ConnectionState>;
 type PingResult = Enum<typeof PingResult>;
@@ -515,7 +516,7 @@ export class Zero<
     );
 
     this.#zeroContext = new ZeroContext(
-      schema.tables,
+      new IVMSourceBranch(schema.tables),
       (ast, gotCallback) => this.#queryManager.add(ast, gotCallback),
       batchViewUpdates,
     );
