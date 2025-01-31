@@ -10,11 +10,10 @@ import {wrapIterable} from '../../../shared/src/iterables.ts';
  */
 export class IVMSourceRepo {
   readonly #main: IVMSourceBranch;
-  sync: IVMSourceBranch;
+  sync: IVMSourceBranch | undefined;
 
-  constructor(main: IVMSourceBranch, sync: IVMSourceBranch) {
+  constructor(main: IVMSourceBranch) {
     this.#main = main;
-    this.sync = sync;
   }
 
   get main() {
