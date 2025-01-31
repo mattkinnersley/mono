@@ -119,7 +119,7 @@ import {
   type CustomMutatorImpl,
   type MakeCustomMutatorInterfaces,
 } from './custom.ts';
-import {IVMSourceBranch, IVMSourceRepo} from './ivm-source-repo.ts';
+import {IVMSourceRepo} from './ivm-source-repo.ts';
 
 type ConnectionState = Enum<typeof ConnectionState>;
 type PingResult = Enum<typeof PingResult>;
@@ -516,9 +516,9 @@ export class Zero<
       maxRecentQueries,
     );
 
-    this.#ivmSources = new IVMSourceRepo(new IVMSourceBranch(schema.tables));
+    this.#ivmSources = new IVMSourceRepo(schema.tables);
     this.#zeroContext = new ZeroContext(
-      this.#ivmSources.getMain(),
+      this.#ivmSources.main,
       (ast, gotCallback) => this.#queryManager.add(ast, gotCallback),
       batchViewUpdates,
     );
@@ -547,6 +547,13 @@ export class Zero<
     this.#metrics.tags.push(`version:${this.version}`);
 
     this.#pokeHandler = new PokeHandler(
+      // ~ here we need to get called back so we can update the sync source.
+      // based on:
+      // 1. patch
+      // 2. result type
+      // 3. if sync source exists, apply the patch to it. If not, create from sync head
+      // ! ^^ put in poke handler
+      // will need access to replicache stores so we can read the sync snapshot
       poke => this.#rep.poke(poke),
       () => this.#onPokeError(),
       rep.clientID,
