@@ -119,7 +119,7 @@ import {
   type CustomMutatorImpl,
   type MakeCustomMutatorInterfaces,
 } from './custom.ts';
-import {IVMSourceBranch} from './ivm-source-repo.ts';
+import {IVMSourceBranch, IVMSourceRepo} from './ivm-source-repo.ts';
 
 type ConnectionState = Enum<typeof ConnectionState>;
 type PingResult = Enum<typeof PingResult>;
@@ -266,6 +266,7 @@ export class Zero<
 
   readonly #pokeHandler: PokeHandler;
   readonly #queryManager: QueryManager;
+  readonly #ivmSources: IVMSourceRepo;
 
   /**
    * The queries we sent when inside the sec-protocol header when establishing a connection.
@@ -515,8 +516,9 @@ export class Zero<
       maxRecentQueries,
     );
 
+    this.#ivmSources = new IVMSourceRepo(new IVMSourceBranch(schema.tables));
     this.#zeroContext = new ZeroContext(
-      new IVMSourceBranch(schema.tables),
+      this.#ivmSources.getMain(),
       (ast, gotCallback) => this.#queryManager.add(ast, gotCallback),
       batchViewUpdates,
     );
