@@ -5,6 +5,10 @@ import * as ErrorKind from '../../../../zero-protocol/src/error-kind-enum.ts';
 import {must} from '../../../../shared/src/must.ts';
 import type {LogContext} from '@rocicorp/logger';
 
+export interface Pusher {
+  enqueuePush(push: PushBody, jwt: string | undefined): void;
+}
+
 /**
  * Receives push messages from zero-client and forwards
  * them the the user's API server.
@@ -23,7 +27,7 @@ import type {LogContext} from '@rocicorp/logger';
  */
 export class PusherService implements Service {
   readonly id: string;
-  readonly #pusher: Pusher;
+  readonly #pusher: PushWorker;
   readonly #queue: Queue<PusherEntryOrStop>;
   #stopped: Promise<void> | undefined;
 
@@ -34,7 +38,7 @@ export class PusherService implements Service {
     apiKey: string | undefined,
   ) {
     this.#queue = new Queue();
-    this.#pusher = new Pusher(lc, pushUrl, apiKey, this.#queue);
+    this.#pusher = new PushWorker(lc, pushUrl, apiKey, this.#queue);
     this.id = clientGroupID;
   }
 
@@ -65,7 +69,7 @@ type PusherEntryOrStop = PusherEntry | 'stop';
  * which the pusher drains and sends in-bulk to the user's API server
  * the next time the pusher is available.
  */
-class Pusher {
+class PushWorker {
   readonly #pushURL: string;
   readonly #apiKey: string | undefined;
   readonly #queue: Queue<PusherEntryOrStop>;

@@ -34,6 +34,7 @@ import {Subscription} from '../types/subscription.ts';
 import {replicaFileModeSchema, replicaFileName} from '../workers/replicator.ts';
 import {Syncer} from '../workers/syncer.ts';
 import {createLogContext} from './logging.ts';
+import {PusherService} from '../services/mutagen/pusher.ts';
 
 function randomID() {
   return randInt(1, Number.MAX_SAFE_INTEGER).toString(36);
@@ -142,11 +143,23 @@ export default async function runWorker(
       permissions,
     );
 
+  const pusherFactory =
+    config.push.url === undefined
+      ? undefined
+      : (id: string) =>
+          new PusherService(
+            lc.withContext('clientGroupID', id),
+            id,
+            must(config.push.url),
+            config.push.apiKey,
+          );
+
   const syncer = new Syncer(
     lc,
     config,
     viewSyncerFactory,
     mutagenFactory,
+    pusherFactory,
     parent,
   );
 
