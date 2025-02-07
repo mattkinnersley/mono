@@ -531,10 +531,13 @@ export class ViewSyncerService implements ViewSyncer, ActivityBasedService {
         );
 
         const patches: PatchToVersion[] = [];
+        const now = Date.now();
         for (const patch of desiredQueriesPatch) {
           switch (patch.op) {
             case 'put':
-              patches.push(...updater.putDesiredQueries(clientID, [patch]));
+              patches.push(
+                ...updater.putDesiredQueries(clientID, [patch], now),
+              );
               break;
             case 'del':
               patches.push(

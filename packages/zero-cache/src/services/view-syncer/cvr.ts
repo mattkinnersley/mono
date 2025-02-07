@@ -213,8 +213,14 @@ export class CVRConfigDrivenUpdater extends CVRUpdater {
 
   putDesiredQueries(
     clientID: string,
-    queries: Readonly<{hash: string; ast: AST}>[],
+    queries: Readonly<{
+      hash: string;
+      ast: AST;
+      ttl?: number | undefined;
+    }>[],
+    now: number,
   ): PatchToVersion[] {
+    // TODO: What if TTL changes of an existing query? We need to update the expiresAt as needed.
     const {client, patches} = this.#ensureClient(clientID);
     const current = new Set(client.desiredQueryIDs);
     const additional = new Set(queries.map(({hash}) => hash));
@@ -226,8 +232,14 @@ export class CVRConfigDrivenUpdater extends CVRUpdater {
     client.desiredQueryIDs = [...union(current, needed)].sort(compareUTF8);
 
     for (const id of needed) {
-      const {ast} = must(queries.find(({hash}) => hash === id));
-      const query = this._cvr.queries[id] ?? {id, ast, desiredBy: {}};
+      const {ast, ttl} = must(queries.find(({hash}) => hash === id));
+      const expiresAt = ttl === undefined ? undefined : now + ttl;
+      const query = this._cvr.queries[id] ?? {
+        id,
+        ast,
+        desiredBy: {},
+        expiresAt,
+      };
       assertNotInternal(query);
 
       query.desiredBy[clientID] = newVersion;

@@ -225,13 +225,14 @@ describe('view-syncer/cvr', () => {
 
   // Relies on an async homing signal (with no explicit flush, so allow retries)
   test('load existing cvr', {retry: 3}, async () => {
+    const now = Date.UTC(2024, 3, 23);
     const initialState: DBState = {
       instances: [
         {
           clientGroupID: 'abc123',
           version: '1a9:02',
           replicaVersion: '123',
-          lastActive: Date.UTC(2024, 3, 23),
+          lastActive: now,
         },
       ],
       clients: [
@@ -252,6 +253,7 @@ describe('view-syncer/cvr', () => {
           patchVersion: '1a9:02',
           internal: null,
           deleted: false,
+          expiresAt: now + 10_000,
         },
       ],
       desires: [
@@ -296,6 +298,7 @@ describe('view-syncer/cvr', () => {
           transformationHash: 'twoHash',
           desiredBy: {fooClient: {stateVersion: '1a9', minorVersion: 1}},
           patchVersion: {stateVersion: '1a9', minorVersion: 2},
+          expiresAt: now + 10_000,
         },
       },
     } satisfies CVRSnapshot);
@@ -313,13 +316,14 @@ describe('view-syncer/cvr', () => {
   });
 
   test('no update', async () => {
+    const now = Date.UTC(2024, 3, 23);
     const initialState: DBState = {
       instances: [
         {
           clientGroupID: 'abc123',
           version: '1a9:02',
           replicaVersion: '112',
-          lastActive: Date.UTC(2024, 3, 23),
+          lastActive: now,
         },
       ],
       clients: [
@@ -340,6 +344,7 @@ describe('view-syncer/cvr', () => {
           patchVersion: '1a9:02',
           internal: null,
           deleted: false,
+          expiresAt: now + 10_000,
         },
       ],
       desires: [
@@ -393,6 +398,7 @@ describe('view-syncer/cvr', () => {
           transformationHash: 'twoHash',
           desiredBy: {fooClient: {stateVersion: '1a9', minorVersion: 1}},
           patchVersion: {stateVersion: '1a9', minorVersion: 2},
+          expiresAt: now + 10_000,
         },
       },
     } satisfies CVRSnapshot);
@@ -525,13 +531,14 @@ describe('view-syncer/cvr', () => {
   });
 
   test('update desired query set', async () => {
+    const now = Date.UTC(2024, 3, 23);
     const initialState: DBState = {
       instances: [
         {
           clientGroupID: 'abc123',
           version: '1aa',
           replicaVersion: '101',
-          lastActive: Date.UTC(2024, 3, 23),
+          lastActive: now,
         },
       ],
       clients: [
@@ -558,6 +565,7 @@ describe('view-syncer/cvr', () => {
           patchVersion: '1a9:02',
           internal: null,
           deleted: false,
+          expiresAt: now + 10_000,
         },
       ],
       desires: [
@@ -617,6 +625,7 @@ describe('view-syncer/cvr', () => {
             fooClient: {stateVersion: '1a9', minorVersion: 1},
           },
           patchVersion: {stateVersion: '1a9', minorVersion: 2},
+          expiresAt: now + 10_000,
         },
       },
     } satisfies CVRSnapshot);
@@ -643,10 +652,14 @@ describe('view-syncer/cvr', () => {
       `);
 
     expect(
-      updater.putDesiredQueries('fooClient', [
-        {hash: 'fourHash', ast: {table: 'users'}},
-        {hash: 'threeHash', ast: {table: 'comments'}},
-      ]),
+      updater.putDesiredQueries(
+        'fooClient',
+        [
+          {hash: 'fourHash', ast: {table: 'users'}},
+          {hash: 'threeHash', ast: {table: 'comments'}, ttl: 10_000},
+        ],
+        now,
+      ),
     ).toMatchInlineSnapshot(`
         [
           {
@@ -684,10 +697,14 @@ describe('view-syncer/cvr', () => {
 
     // This adds a new barClient with desired queries.
     expect(
-      updater.putDesiredQueries('barClient', [
-        {hash: 'oneHash', ast: {table: 'issues'}},
-        {hash: 'threeHash', ast: {table: 'comments'}},
-      ]),
+      updater.putDesiredQueries(
+        'barClient',
+        [
+          {hash: 'oneHash', ast: {table: 'issues'}},
+          {hash: 'threeHash', ast: {table: 'comments'}},
+        ],
+        now,
+      ),
     ).toMatchInlineSnapshot(`
           [
             {
@@ -735,7 +752,9 @@ describe('view-syncer/cvr', () => {
         `);
 
     // Adds a new client with no desired queries.
-    expect(updater.putDesiredQueries('bonkClient', [])).toMatchInlineSnapshot(
+    expect(
+      updater.putDesiredQueries('bonkClient', [], now),
+    ).toMatchInlineSnapshot(
       `
                 [
                   {
@@ -846,6 +865,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: undefined,
           desiredBy: {barClient: {stateVersion: '1aa', minorVersion: 1}},
           patchVersion: {stateVersion: '1a9', minorVersion: 2},
+          expiresAt: now + 10_000,
         },
         threeHash: {
           id: 'threeHash',
@@ -854,11 +874,13 @@ describe('view-syncer/cvr', () => {
             barClient: {stateVersion: '1aa', minorVersion: 1},
             fooClient: {stateVersion: '1aa', minorVersion: 1},
           },
+          expiresAt: now + 10_000,
         },
         fourHash: {
           id: 'fourHash',
           ast: {table: 'users'},
           desiredBy: {fooClient: {stateVersion: '1aa', minorVersion: 1}},
+          expiresAt: undefined,
         },
       },
     } satisfies CVRSnapshot);
@@ -912,6 +934,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'fourHash',
           transformationHash: null,
           transformationVersion: null,
+          expiresAt: null,
         },
         {
           clientAST: {
@@ -941,6 +964,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'lmids',
           transformationHash: null,
           transformationVersion: null,
+          expiresAt: null,
         },
         {
           clientAST: {
@@ -953,6 +977,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'threeHash',
           transformationHash: null,
           transformationVersion: null,
+          expiresAt: now + 10_000,
         },
         {
           clientAST: {
@@ -965,6 +990,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'oneHash',
           transformationHash: 'twoHash',
           transformationVersion: null,
+          expiresAt: now + 10_000,
         },
       ],
       desires: [
@@ -1031,9 +1057,11 @@ describe('view-syncer/cvr', () => {
     // desired query update statement is an UPSERT.
     const updater2 = new CVRConfigDrivenUpdater(cvrStore2, reloaded, SHARD_ID);
     expect(
-      updater2.putDesiredQueries('fooClient', [
-        {hash: 'oneHash', ast: {table: 'issues'}},
-      ]),
+      updater2.putDesiredQueries(
+        'fooClient',
+        [{hash: 'oneHash', ast: {table: 'issues'}}],
+        now,
+      ),
     ).toMatchInlineSnapshot(`
       [
         {
@@ -1064,13 +1092,14 @@ describe('view-syncer/cvr', () => {
   });
 
   test('no-op change to desired query set', async () => {
+    const now = Date.UTC(2024, 3, 23);
     const initialState: DBState = {
       instances: [
         {
           clientGroupID: 'abc123',
           version: '1aa',
           replicaVersion: '03',
-          lastActive: Date.UTC(2024, 3, 23),
+          lastActive: now,
         },
       ],
       clients: [
@@ -1091,6 +1120,7 @@ describe('view-syncer/cvr', () => {
           patchVersion: '1a9:02',
           deleted: false,
           internal: null,
+          expiresAt: now + 10_000,
         },
       ],
       desires: [
@@ -1119,9 +1149,11 @@ describe('view-syncer/cvr', () => {
 
     // Same desired query set. Nothing should change except last active time.
     expect(
-      updater.putDesiredQueries('fooClient', [
-        {hash: 'oneHash', ast: {table: 'issues'}},
-      ]),
+      updater.putDesiredQueries(
+        'fooClient',
+        [{hash: 'oneHash', ast: {table: 'issues'}}],
+        Date.UTC(2024, 3, 23),
+      ),
     ).toMatchInlineSnapshot(`[]`);
 
     // Same last active day (no index change), but different hour.
@@ -1182,13 +1214,14 @@ describe('view-syncer/cvr', () => {
   const IN_OLD_PATCH_ROW_KEY = {id: '777'};
 
   test('desired to got', async () => {
+    const now = Date.UTC(2024, 3, 23);
     const initialState: DBState = {
       instances: [
         {
           clientGroupID: 'abc123',
           version: '1aa',
           replicaVersion: null,
-          lastActive: Date.UTC(2024, 3, 23),
+          lastActive: now,
         },
       ],
       clients: [
@@ -1209,6 +1242,7 @@ describe('view-syncer/cvr', () => {
           patchVersion: null,
           internal: null,
           deleted: null,
+          expiresAt: now + 10_000,
         },
         {
           clientGroupID: 'abc123',
@@ -1219,6 +1253,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           internal: null,
           deleted: true, // Already in CVRs from "189"
+          expiresAt: now + 10_000,
         },
         {
           clientGroupID: 'abc123',
@@ -1229,6 +1264,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           internal: null,
           deleted: true,
+          expiresAt: now + 10_000,
         },
       ],
       desires: [
@@ -1522,6 +1558,7 @@ describe('view-syncer/cvr', () => {
           transformationHash: 'serverOneHash',
           transformationVersion: {stateVersion: '1aa', minorVersion: 1},
           patchVersion: {stateVersion: '1aa', minorVersion: 1},
+          expiresAt: now + 10_000,
         },
       },
       lastActive: 1713834000000,
@@ -1570,6 +1607,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'already-deleted',
           transformationHash: null,
           transformationVersion: null,
+          expiresAt: now + 10_000,
         },
         {
           clientAST: {
@@ -1582,6 +1620,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'catchup-delete',
           transformationHash: null,
           transformationVersion: null,
+          expiresAt: now + 10_000,
         },
         {
           clientAST: {
@@ -1594,6 +1633,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'oneHash',
           transformationHash: 'serverOneHash',
           transformationVersion: '1aa:01',
+          expiresAt: now + 10_000,
         },
       ],
       desires: [
@@ -1665,13 +1705,14 @@ describe('view-syncer/cvr', () => {
 
   // ^^: just run this test twice? Once for executed once for transformed
   test('new transformation hash', async () => {
+    const now = Date.UTC(2024, 3, 23);
     const initialState: DBState = {
       instances: [
         {
           clientGroupID: 'abc123',
           version: '1ba',
           replicaVersion: '123',
-          lastActive: Date.UTC(2024, 3, 23),
+          lastActive: now,
         },
       ],
       clients: [
@@ -1692,6 +1733,7 @@ describe('view-syncer/cvr', () => {
           patchVersion: '1aa:01',
           internal: null,
           deleted: null,
+          expiresAt: now + 10_000,
         },
         {
           clientGroupID: 'abc123',
@@ -1702,6 +1744,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           internal: null,
           deleted: true, // Already in CVRs from "189"
+          expiresAt: now + 10_000,
         },
         {
           clientGroupID: 'abc123',
@@ -1712,6 +1755,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           internal: null,
           deleted: true,
+          expiresAt: now + 10_000,
         },
       ],
       desires: [
@@ -1972,6 +2016,7 @@ describe('view-syncer/cvr', () => {
           transformationHash: 'serverTwoHash',
           transformationVersion: {stateVersion: '1ba', minorVersion: 1},
           patchVersion: {stateVersion: '1aa', minorVersion: 1},
+          expiresAt: now + 10_000,
         },
       },
       lastActive: 1713834000000,
@@ -2006,6 +2051,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'already-deleted',
           transformationHash: null,
           transformationVersion: null,
+          expiresAt: now + 10_000,
         },
         {
           clientAST: {
@@ -2018,6 +2064,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'catchup-delete',
           transformationHash: null,
           transformationVersion: null,
+          expiresAt: now + 10_000,
         },
         {
           clientAST: {
@@ -2030,6 +2077,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'oneHash',
           transformationHash: 'serverTwoHash',
           transformationVersion: '1ba:01',
+          expiresAt: now + 10_000,
         },
       ],
       desires: [
@@ -2147,6 +2195,7 @@ describe('view-syncer/cvr', () => {
           },
           clientGroupID: 'abc123',
           deleted: true,
+          expiresAt: now + 10_000,
           internal: null,
           patchVersion: '189',
           queryHash: 'already-deleted',
@@ -2159,6 +2208,7 @@ describe('view-syncer/cvr', () => {
           },
           clientGroupID: 'abc123',
           deleted: true,
+          expiresAt: now + 10_000,
           internal: null,
           patchVersion: '19z',
           queryHash: 'catchup-delete',
@@ -2171,6 +2221,7 @@ describe('view-syncer/cvr', () => {
           },
           clientGroupID: 'abc123',
           deleted: false,
+          expiresAt: now + 10_000,
           internal: null,
           patchVersion: '1aa:01',
           queryHash: 'oneHash',
@@ -2182,13 +2233,14 @@ describe('view-syncer/cvr', () => {
   });
 
   test('multiple executed queries', async () => {
+    const now = Date.UTC(2024, 3, 23);
     const initialState: DBState = {
       instances: [
         {
           clientGroupID: 'abc123',
           version: '1ba',
           replicaVersion: '123',
-          lastActive: Date.UTC(2024, 3, 23),
+          lastActive: now,
         },
       ],
       clients: [
@@ -2209,6 +2261,7 @@ describe('view-syncer/cvr', () => {
           patchVersion: '1aa:01',
           internal: null,
           deleted: null,
+          expiresAt: now + 10_000,
         },
         {
           clientGroupID: 'abc123',
@@ -2219,6 +2272,7 @@ describe('view-syncer/cvr', () => {
           patchVersion: '1aa:01',
           internal: null,
           deleted: null,
+          expiresAt: now + 10_000,
         },
         {
           clientGroupID: 'abc123',
@@ -2229,6 +2283,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           internal: null,
           deleted: true,
+          expiresAt: now + 10_000,
         },
         {
           clientGroupID: 'abc123',
@@ -2239,6 +2294,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           internal: null,
           deleted: true,
+          expiresAt: now + 10_000,
         },
       ],
       desires: [
@@ -2565,6 +2621,7 @@ describe('view-syncer/cvr', () => {
           transformationHash: 'updatedServerOneHash',
           transformationVersion: newVersion,
           patchVersion: {stateVersion: '1aa', minorVersion: 1},
+          expiresAt: now + 10_000,
         },
         twoHash: {
           id: 'twoHash',
@@ -2573,6 +2630,7 @@ describe('view-syncer/cvr', () => {
           transformationHash: 'updatedServerTwoHash',
           transformationVersion: newVersion,
           patchVersion: {stateVersion: '1aa', minorVersion: 1},
+          expiresAt: now + 10_000,
         },
       },
     } satisfies CVRSnapshot);
@@ -2613,6 +2671,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'already-deleted',
           transformationHash: null,
           transformationVersion: null,
+          expiresAt: now + 10_000,
         },
         {
           clientAST: {
@@ -2625,6 +2684,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'catchup-delete',
           transformationHash: null,
           transformationVersion: null,
+          expiresAt: now + 10_000,
         },
         {
           clientAST: {
@@ -2637,6 +2697,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'oneHash',
           transformationHash: 'updatedServerOneHash',
           transformationVersion: '1ba:01',
+          expiresAt: now + 10_000,
         },
         {
           clientAST: {
@@ -2649,6 +2710,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'twoHash',
           transformationHash: 'updatedServerTwoHash',
           transformationVersion: '1ba:01',
+          expiresAt: now + 10_000,
         },
       ],
       desires: [
@@ -2724,13 +2786,14 @@ describe('view-syncer/cvr', () => {
   });
 
   test('removed query', async () => {
+    const now = Date.UTC(2024, 3, 23);
     const initialState: DBState = {
       instances: [
         {
           clientGroupID: 'abc123',
           version: '1ba',
           replicaVersion: '123',
-          lastActive: Date.UTC(2024, 3, 23),
+          lastActive: now,
         },
       ],
       clients: [],
@@ -2744,6 +2807,7 @@ describe('view-syncer/cvr', () => {
           patchVersion: '1aa:01',
           internal: null,
           deleted: false,
+          expiresAt: now + 10_000,
         },
         {
           clientGroupID: 'abc123',
@@ -2754,6 +2818,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           internal: null,
           deleted: true,
+          expiresAt: now + 10_000,
         },
         {
           clientGroupID: 'abc123',
@@ -2764,6 +2829,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           internal: null,
           deleted: true,
+          expiresAt: now + 10_000,
         },
       ],
       desires: [],
@@ -2996,6 +3062,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'already-deleted',
           transformationHash: null,
           transformationVersion: null,
+          expiresAt: now + 10_000,
         },
         {
           clientAST: {
@@ -3008,6 +3075,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'catchup-delete',
           transformationHash: null,
           transformationVersion: null,
+          expiresAt: now + 10_000,
         },
         {
           clientAST: {
@@ -3020,6 +3088,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'oneHash',
           transformationHash: null,
           transformationVersion: null,
+          expiresAt: now + 10_000,
         },
       ],
       desires: [],
@@ -3078,13 +3147,14 @@ describe('view-syncer/cvr', () => {
   });
 
   test('unchanged queries', async () => {
+    const now = Date.UTC(2024, 3, 23);
     const initialState: DBState = {
       instances: [
         {
           clientGroupID: 'abc123',
           version: '1ba',
           replicaVersion: '120',
-          lastActive: Date.UTC(2024, 3, 23),
+          lastActive: now,
         },
       ],
       clients: [
@@ -3105,6 +3175,7 @@ describe('view-syncer/cvr', () => {
           patchVersion: '1aa:01',
           internal: null,
           deleted: null,
+          expiresAt: now + 10_000,
         },
         {
           clientGroupID: 'abc123',
@@ -3115,6 +3186,7 @@ describe('view-syncer/cvr', () => {
           patchVersion: '1aa:01',
           internal: null,
           deleted: null,
+          expiresAt: now + 10_000,
         },
         {
           clientGroupID: 'abc123',
@@ -3125,6 +3197,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           internal: null,
           deleted: true,
+          expiresAt: now + 10_000,
         },
         {
           clientGroupID: 'abc123',
@@ -3135,6 +3208,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           internal: null,
           deleted: true,
+          expiresAt: now + 10_000,
         },
       ],
       desires: [
@@ -3244,6 +3318,7 @@ describe('view-syncer/cvr', () => {
                 "stateVersion": "1a9",
               },
             },
+            "expiresAt": 1713830410000,
             "id": "oneHash",
             "patchVersion": {
               "minorVersion": 1,
@@ -3264,6 +3339,7 @@ describe('view-syncer/cvr', () => {
                 "stateVersion": "1a9",
               },
             },
+            "expiresAt": 1713830410000,
             "id": "twoHash",
             "patchVersion": {
               "minorVersion": 1,
@@ -3525,13 +3601,14 @@ describe('view-syncer/cvr', () => {
     const NEW_ROW_KEY3 = {newID: '3baz'};
     const NEW_ROW_KEY4 = {newID: 'voo'};
 
+    const now = Date.UTC(2024, 3, 23);
     const initialState: DBState = {
       instances: [
         {
           clientGroupID: 'abc123',
           version: '1ba',
           replicaVersion: '123',
-          lastActive: Date.UTC(2024, 3, 23),
+          lastActive: now,
         },
       ],
       clients: [
@@ -3552,6 +3629,7 @@ describe('view-syncer/cvr', () => {
           patchVersion: '1aa:01',
           internal: null,
           deleted: null,
+          expiresAt: now + 10_000,
         },
       ],
       desires: [
@@ -3775,6 +3853,7 @@ describe('view-syncer/cvr', () => {
           queryHash: 'oneHash',
           transformationHash: 'serverOneHash',
           transformationVersion: '1aa',
+          expiresAt: now + 10_000,
         },
       ],
       desires: [
@@ -3831,13 +3910,14 @@ describe('view-syncer/cvr', () => {
   });
 
   test('advance with delete that cancels out add', async () => {
+    const now = Date.UTC(2024, 3, 23);
     const initialState: DBState = {
       instances: [
         {
           clientGroupID: 'abc123',
           version: '1aa',
           replicaVersion: '120',
-          lastActive: Date.UTC(2024, 3, 23),
+          lastActive: now,
         },
       ],
       clients: [
@@ -3858,6 +3938,7 @@ describe('view-syncer/cvr', () => {
           patchVersion: null,
           internal: null,
           deleted: null,
+          expiresAt: now + 10_000,
         },
       ],
       desires: [
@@ -4003,6 +4084,7 @@ describe('view-syncer/cvr', () => {
           patchVersion: null,
           internal: null,
           deleted: null,
+          expiresAt: now + 10_000,
         },
       ],
       desires: [

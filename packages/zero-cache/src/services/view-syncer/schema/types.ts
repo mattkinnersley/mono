@@ -174,9 +174,17 @@ export const clientQueryRecordSchema = baseQueryRecordSchema.extend({
   // the queryID was added to their desired query set (i.e. individual `patchVersion`s).
   desiredBy: v.record(cvrVersionSchema),
 
+  /**
+   * The time this query should expire. If absent, the query is considered to
+   * have no expiration. The expiration time is set when the query is added to
+   * the desired queries, and needs to be updated when the query is added again (max
+   * TTL).
+   */
+  // TODO: Make sure we update the TTL
+  expiresAt: v.number().optional(),
+
   // TODO: Iron this out.
-  // estimatedBytes: v.number(),
-  // lru information?
+  // rowCount: v.number(),
 });
 
 export type ClientQueryRecord = v.Infer<typeof clientQueryRecordSchema>;

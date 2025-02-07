@@ -13,7 +13,7 @@ import type {
   PokeStartBody,
 } from '../../../../zero-protocol/src/poke.ts';
 import {primaryKeyValueRecordSchema} from '../../../../zero-protocol/src/primary-key.ts';
-import type {RowPatchOp} from '../../../../zero-protocol/src/row-patch.ts';
+import type {DelOp, PutOp} from '../../../../zero-protocol/src/row-patch.ts';
 import type {JSONObject} from '../../types/bigint-json.ts';
 import {getLogLevel} from '../../types/error-for-client.ts';
 import {
@@ -214,6 +214,12 @@ export class ClientHandler {
           if (patch.id.table === this.#zeroClientsTable) {
             this.#updateLMIDs((body.lastMutationIDChanges ??= {}), patch);
           } else {
+            // TODO: Keep track of number of rows per query.
+            const rowPatch = makeRowPatch(patch);
+            const delta = rowPatch.op === 'put' ? 1 : -1;
+            lc.debug?.(
+              `row patch: ${patch.id.table} ${patch.id.rowKey} ${delta}`,
+            );
             (body.rowsPatch ??= []).push(makeRowPatch(patch));
           }
           break;
@@ -296,7 +302,7 @@ const lmidRowSchema = v.object({
   lastMutationID: v.number(), // Actually returned as a bigint, but converted by ensureSafeJSON().
 });
 
-function makeRowPatch(patch: RowPatch): RowPatchOp {
+function makeRowPatch(patch: RowPatch): PutOp | DelOp {
   const {
     op,
     id: {table: tableName, rowKey: id},

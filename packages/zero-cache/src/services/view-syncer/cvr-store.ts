@@ -426,6 +426,7 @@ function asQuery(row: QueriesRow): QueryRecord {
         desiredBy: {},
         transformationHash: row.transformationHash ?? undefined,
         transformationVersion: maybeVersion(row.transformationVersion),
+        expiresAt: row.expiresAt ?? undefined,
       } satisfies ClientQueryRecord);
 }
 
@@ -732,6 +733,7 @@ export class CVRStore {
           ),
           internal: true,
           deleted: false, // put vs del "got" query
+          expiresAt: null,
         }
       : {
           clientGroupID: this.#id,
@@ -744,6 +746,7 @@ export class CVRStore {
           ),
           internal: null,
           deleted: false, // put vs del "got" query
+          expiresAt: query.expiresAt ?? null,
         };
     this.#writes.add({
       stats: {queries: 1},

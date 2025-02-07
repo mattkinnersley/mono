@@ -76,10 +76,9 @@ export async function definePermissions<TAuthDataShape, TSchema extends Schema>(
     ExpressionBuilder<Schema, string>
   >;
   for (const name of Object.keys(schema.tables)) {
-    expressionBuilders[name] = new StaticQuery(
-      schema,
-      name,
-    ).expressionBuilder();
+    expressionBuilders[name] = new StaticQuery(schema, name, {
+      table: name,
+    }).expressionBuilder();
   }
 
   const config = await definer();

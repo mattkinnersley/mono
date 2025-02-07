@@ -21,6 +21,13 @@ import type {ReadTransaction} from './replicache-types.ts';
 
 type QueryHash = string;
 
+type QueryEntry = {
+  normalized: AST;
+  count: number;
+  gotCallbacks: GotCallback[];
+  expiresAt: number | undefined;
+};
+
 /**
  * Tracks what queries the client is currently subscribed to on the server.
  * Sends `changeDesiredQueries` message to server when this changes.
@@ -30,10 +37,7 @@ export class QueryManager {
   readonly #clientID: ClientID;
   readonly #clientToServer: NameMapper;
   readonly #send: (change: ChangeDesiredQueriesMessage) => void;
-  readonly #queries: Map<
-    QueryHash,
-    {normalized: AST; count: number; gotCallbacks: GotCallback[]}
-  > = new Map();
+  readonly #queries: Map<QueryHash, QueryEntry> = new Map();
   readonly #recentQueriesMaxSize: number;
   readonly #recentQueries: Set<string> = new Set();
   readonly #gotQueries: Set<string> = new Set();
@@ -98,6 +102,7 @@ export class QueryManager {
     tx: ReadTransaction,
     lastPatch?: Map<string, QueriesPatchOp> | undefined,
   ): Promise<Map<string, QueriesPatchOp>> {
+    const now = Date.now();
     const existingQueryHashes = new Set<string>();
     const prefix = desiredQueriesPrefixForClient(this.#clientID);
     for await (const key of tx.scan({prefix}).keys()) {
@@ -109,9 +114,18 @@ export class QueryManager {
         patch.set(hash, {op: 'del', hash});
       }
     }
-    for (const [hash, {normalized}] of this.#queries) {
+    for (const [hash, {normalized, expiresAt}] of this.#queries) {
       if (!existingQueryHashes.has(hash)) {
-        patch.set(hash, {op: 'put', hash, ast: normalized});
+        let ttl: number | undefined;
+        if (expiresAt !== undefined) {
+          ttl = expiresAt - now;
+        }
+        patch.set(hash, {
+          op: 'put',
+          hash,
+          ast: normalized,
+          ttl,
+        });
       }
     }
 
@@ -135,7 +149,11 @@ export class QueryManager {
     return patch;
   }
 
-  add(ast: AST, gotCallback?: GotCallback | undefined): () => void {
+  add(
+    ast: AST,
+    ttl: number | undefined,
+    gotCallback?: GotCallback | undefined,
+  ): () => void {
     const normalized = normalizeAST(ast);
     const astHash = hashOfAST(normalized);
     let entry = this.#queries.get(astHash);
@@ -146,13 +164,19 @@ export class QueryManager {
         normalized: serverAST,
         count: 1,
         gotCallbacks: gotCallback === undefined ? [] : [gotCallback],
+        expiresAt: ttl === undefined ? undefined : Date.now() + ttl,
       };
       this.#queries.set(astHash, entry);
       this.#send([
         'changeDesiredQueries',
-        {desiredQueriesPatch: [{op: 'put', hash: astHash, ast: serverAST}]},
+        {
+          desiredQueriesPatch: [
+            {op: 'put', hash: astHash, ast: serverAST, ttl},
+          ],
+        },
       ]);
     } else {
+      // TODO: We need to update the TTL and tell the server if it changed.
       ++entry.count;
       if (gotCallback) {
         entry.gotCallbacks.push(gotCallback);
