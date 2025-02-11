@@ -218,7 +218,7 @@ export class CVRConfigDrivenUpdater extends CVRUpdater {
       ast: AST;
       ttl?: number | undefined;
     }>[],
-    now: number,
+    _now: number,
   ): PatchToVersion[] {
     // TODO: What if TTL changes of an existing query? We need to update the expiresAt as needed.
     const {client, patches} = this.#ensureClient(clientID);
@@ -233,12 +233,12 @@ export class CVRConfigDrivenUpdater extends CVRUpdater {
 
     for (const id of needed) {
       const {ast, ttl} = must(queries.find(({hash}) => hash === id));
-      const expiresAt = ttl === undefined ? undefined : now + ttl;
+
       const query = this._cvr.queries[id] ?? {
         id,
         ast,
         desiredBy: {},
-        expiresAt,
+        ttl,
       };
       assertNotInternal(query);
 
@@ -255,7 +255,14 @@ export class CVRConfigDrivenUpdater extends CVRUpdater {
     return patches;
   }
 
-  deleteDesiredQueries(clientID: string, queries: string[]): PatchToVersion[] {
+  /**
+   * This is called when the QueryManager removes a query on the client.
+   */
+  deleteDesiredQueries(
+    clientID: string,
+    queries: string[],
+    _now: number,
+  ): PatchToVersion[] {
     const {client, patches} = this.#ensureClient(clientID);
     const current = new Set(client.desiredQueryIDs);
     const unwanted = new Set(queries);
@@ -285,11 +292,11 @@ export class CVRConfigDrivenUpdater extends CVRUpdater {
     return patches;
   }
 
-  clearDesiredQueries(clientID: string): PatchToVersion[] {
+  clearDesiredQueries(clientID: string, now: number): PatchToVersion[] {
     const {client, patches} = this.#ensureClient(clientID);
     return [
       ...patches,
-      ...this.deleteDesiredQueries(clientID, client.desiredQueryIDs),
+      ...this.deleteDesiredQueries(clientID, client.desiredQueryIDs, now),
     ];
   }
 

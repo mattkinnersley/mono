@@ -541,11 +541,12 @@ export class ViewSyncerService implements ViewSyncer, ActivityBasedService {
               break;
             case 'del':
               patches.push(
-                ...updater.deleteDesiredQueries(clientID, [patch.hash]),
+                ...updater.deleteDesiredQueries(clientID, [patch.hash], now),
               );
               break;
             case 'clear':
-              patches.push(...updater.clearDesiredQueries(clientID));
+              // TODO: I don't think this is ever used?
+              patches.push(...updater.clearDesiredQueries(clientID, now));
               break;
           }
         }

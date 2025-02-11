@@ -633,8 +633,9 @@ describe('view-syncer/cvr', () => {
     const updater = new CVRConfigDrivenUpdater(cvrStore, cvr, SHARD_ID);
 
     // This removes and adds desired queries to the existing fooClient.
-    expect(updater.deleteDesiredQueries('fooClient', ['oneHash', 'twoHash']))
-      .toMatchInlineSnapshot(`
+    expect(
+      updater.deleteDesiredQueries('fooClient', ['oneHash', 'twoHash'], now),
+    ).toMatchInlineSnapshot(`
         [
           {
             "patch": {
@@ -771,7 +772,8 @@ describe('view-syncer/cvr', () => {
                 ]
               `,
     );
-    expect(updater.clearDesiredQueries('dooClient')).toMatchInlineSnapshot(`
+    expect(updater.clearDesiredQueries('dooClient', now))
+      .toMatchInlineSnapshot(`
                   [
                     {
                       "patch": {
@@ -1154,7 +1156,7 @@ describe('view-syncer/cvr', () => {
       updater.putDesiredQueries(
         'fooClient',
         [{hash: 'oneHash', ast: {table: 'issues'}}],
-        Date.UTC(2024, 3, 23),
+        now,
       ),
     ).toMatchInlineSnapshot(`[]`);
 
