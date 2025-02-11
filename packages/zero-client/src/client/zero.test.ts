@@ -57,7 +57,7 @@ import {
 } from './test-utils.ts'; // Why use fakes when we can use the real thing!
 import {
   CONNECT_TIMEOUT_MS,
-  createSocket,
+  createSyncSocket,
   DEFAULT_DISCONNECT_HIDDEN_DELAY_MS,
   PING_INTERVAL_MS,
   PING_TIMEOUT_MS,
@@ -359,7 +359,7 @@ suite('createSocket', () => {
     const schemaVersion = 3;
     test(expectedURL, async () => {
       sinon.stub(performance, 'now').returns(now);
-      const [mockSocket, queriesPatch, deletedClients] = await createSocket(
+      const [mockSocket, queriesPatch, deletedClients] = await createSyncSocket(
         mockRep,
         mockQueryManager,
         mockDeleteClientsManager,
@@ -393,24 +393,25 @@ suite('createSocket', () => {
       expect(queriesPatch).toEqual(new Map());
       expect(deletedClients).toBeUndefined();
 
-      const [mockSocket2, queriesPatch2, deletedClients2] = await createSocket(
-        mockRep,
-        mockQueryManager,
-        mockDeleteClientsManager,
-        socketURL,
-        baseCookie,
-        clientID,
-        'testClientGroupID',
-        schemaVersion,
-        userID,
-        auth,
-        lmid,
-        'wsidx',
-        debugPerf,
-        new LogContext('error', undefined, new TestLogSink()),
-        0, // do not put any extra information into headers
-        additionalConnectParams,
-      );
+      const [mockSocket2, queriesPatch2, deletedClients2] =
+        await createSyncSocket(
+          mockRep,
+          mockQueryManager,
+          mockDeleteClientsManager,
+          socketURL,
+          baseCookie,
+          clientID,
+          'testClientGroupID',
+          schemaVersion,
+          userID,
+          auth,
+          lmid,
+          'wsidx',
+          debugPerf,
+          new LogContext('error', undefined, new TestLogSink()),
+          0, // do not put any extra information into headers
+          additionalConnectParams,
+        );
       expect(`${mockSocket.url}`).equal(expectedURL);
       expect(mockSocket2.protocol).equal(encodeSecProtocols(undefined, auth));
       // if we did not encode queries into the sec-protocol header, we should not have a queriesPatch

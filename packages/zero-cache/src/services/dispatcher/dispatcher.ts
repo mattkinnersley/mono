@@ -7,6 +7,7 @@ import {HttpService, type Options} from '../http-service.ts';
 import {getConnectParams} from './connect-params.ts';
 import {installWebSocketHandoff} from './websocket-handoff.ts';
 import {assert} from '../../../../shared/src/asserts.ts';
+import type {ConnectionVerb} from '../../../../zero-protocol/src/connection-verb.ts';
 
 // The server allows the client to use any /:base/ path to facilitate
 // servicing requests on the same domain as the application.
@@ -80,7 +81,7 @@ export class Dispatcher extends HttpService {
 
 export function parsePath(
   url: URL,
-): {base?: string; verb: 'sync' | 'mutate'; version: string} | undefined {
+): {base?: string; verb: ConnectionVerb; version: string} | undefined {
   // The match() returns both null and undefined.
   return CONNECT_URL_PATTERN.match(url.pathname) || undefined;
 }

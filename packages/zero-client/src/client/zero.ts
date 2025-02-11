@@ -128,6 +128,7 @@ import {
 import {getServer} from './server-option.ts';
 import {version} from './version.ts';
 import {PokeHandler} from './zero-poke-handler.ts';
+import type {ConnectionVerb} from '../../../zero-protocol/src/connection-verb.ts';
 
 type ConnectionState = Enum<typeof ConnectionState>;
 type PingResult = Enum<typeof PingResult>;
@@ -1034,24 +1035,40 @@ export class Zero<
     // signal.aborted cannot be true here because we checked for `this.closed` above.
     this.#closeAbortController.signal.addEventListener('abort', abortHandler);
 
-    const [ws, initConnectionQueries, deletedClients] = await createSocket(
-      this.#rep,
-      this.#queryManager,
-      this.#deleteClientsManager,
-      toWSString(this.#server),
-      this.#connectCookie,
-      this.clientID,
-      await this.clientGroupID,
-      this.#options.schema.version,
-      this.userID,
-      this.#rep.auth,
-      this.#lastMutationIDReceived,
-      wsid,
-      this.#options.logLevel === 'debug',
-      l,
-      this.#options.maxHeaderLength,
-      additionalConnectParams,
-    );
+    const [syncWs, initConnectionQueries, deletedClients] =
+      await createSyncSocket(
+        this.#rep,
+        this.#queryManager,
+        this.#deleteClientsManager,
+        toWSString(this.#server),
+        this.#connectCookie,
+        this.clientID,
+        await this.clientGroupID,
+        this.#options.schema.version,
+        this.userID,
+        this.#rep.auth,
+        this.#lastMutationIDReceived,
+        wsid,
+        this.#options.logLevel === 'debug',
+        l,
+        this.#options.maxHeaderLength,
+        additionalConnectParams,
+      );
+
+    // const mutateWs = createMutateSocket(
+    //   toWSString(this.#server),
+    //   this.#connectCookie,
+    //   this.clientID,
+    //   await this.clientGroupID,
+    //   this.#options.schema.version,
+    //   this.userID,
+    //   this.#rep.auth,
+    //   this.#lastMutationIDReceived,
+    //   wsid,
+    //   this.#options.logLevel === 'debug',
+    //   l,
+    //   additionalConnectParams,
+    // );
 
     if (this.closed) {
       return;
@@ -1059,11 +1076,11 @@ export class Zero<
 
     this.#initConnectionQueries = initConnectionQueries;
     this.#deletedClients = deletedClients;
-    ws.addEventListener('message', this.#onMessage);
-    ws.addEventListener('open', this.#onOpen);
-    ws.addEventListener('close', this.#onClose);
-    this.#socket = ws;
-    this.#socketResolver.resolve(ws);
+    syncWs.addEventListener('message', this.#onMessage);
+    syncWs.addEventListener('open', this.#onOpen);
+    syncWs.addEventListener('close', this.#onClose);
+    this.#socket = syncWs;
+    this.#socketResolver.resolve(syncWs);
 
     try {
       l.debug?.('Waiting for connection to be acknowledged');
@@ -1694,7 +1711,89 @@ export class Zero<
   }
 }
 
-export async function createSocket(
+function createSocketUrl(
+  socketOrigin: WSString,
+  verb: ConnectionVerb,
+  baseCookie: NullableVersion,
+  clientID: string,
+  clientGroupID: string,
+  schemaVersion: number,
+  userID: string,
+  lmid: number,
+  wsid: string,
+  debugPerf: boolean,
+  lc: LogContext,
+  additionalConnectParams?: Record<string, string> | undefined,
+) {
+  const url = new URL(
+    appendPath(socketOrigin, `/${verb}/v${PROTOCOL_VERSION}/connect`),
+  );
+  const {searchParams} = url;
+  searchParams.set('clientID', clientID);
+  searchParams.set('clientGroupID', clientGroupID);
+  searchParams.set('schemaVersion', schemaVersion.toString());
+  searchParams.set('userID', userID);
+  searchParams.set('baseCookie', baseCookie === null ? '' : String(baseCookie));
+  searchParams.set('ts', String(performance.now()));
+  searchParams.set('lmid', String(lmid));
+  searchParams.set('wsid', wsid);
+  if (debugPerf) {
+    searchParams.set('debugPerf', true.toString());
+  }
+  if (additionalConnectParams) {
+    for (const k in additionalConnectParams) {
+      if (searchParams.has(k)) {
+        lc.warn?.(`skipping conflicting parameter ${k}`);
+      } else {
+        searchParams.set(k, additionalConnectParams[k]);
+      }
+    }
+  }
+
+  return url;
+}
+
+export function createMutateSocket(
+  socketOrigin: WSString,
+  baseCookie: NullableVersion,
+  clientID: string,
+  clientGroupID: string,
+  schemaVersion: number,
+  userID: string,
+  auth: string | undefined,
+  lmid: number,
+  wsid: string,
+  debugPerf: boolean,
+  lc: LogContext,
+  additionalConnectParams?: Record<string, string> | undefined,
+): WebSocket {
+  const url = createSocketUrl(
+    socketOrigin,
+    'mutate',
+    baseCookie,
+    clientID,
+    clientGroupID,
+    schemaVersion,
+    userID,
+    lmid,
+    wsid,
+    debugPerf,
+    lc,
+    additionalConnectParams,
+  );
+  lc.info?.('Connecting to', url.toString());
+
+  const WS = mustGetBrowserGlobal('WebSocket');
+  const secProtocol = encodeSecProtocols(undefined, auth);
+
+  return new WS(
+    // toString() required for RN URL polyfill.
+    url.toString(),
+    secProtocol,
+  );
+}
+
+export async function createSyncSocket(
   rep: ReplicacheImpl,
   queryManager: QueryManager,
   deleteClientsManager: DeleteClientsManager,
@@ -1718,30 +1817,20 @@ export async function createSocket(
     DeleteClientsBody | undefined,
   ]
 > {
-  const url = new URL(
-    appendPath(socketOrigin, `/sync/v${PROTOCOL_VERSION}/connect`),
+  const url = createSocketUrl(
+    socketOrigin,
+    'sync',
+    baseCookie,
+    clientID,
+    clientGroupID,
+    schemaVersion,
+    userID,
+    lmid,
+    wsid,
+    debugPerf,
+    lc,
+    additionalConnectParams,
   );
-  const {searchParams} = url;
-  searchParams.set('clientID', clientID);
-  searchParams.set('clientGroupID', clientGroupID);
-  searchParams.set('schemaVersion', schemaVersion.toString());
-  searchParams.set('userID', userID);
-  searchParams.set('baseCookie', baseCookie === null ? '' : String(baseCookie));
-  searchParams.set('ts', String(performance.now()));
-  searchParams.set('lmid', String(lmid));
-  searchParams.set('wsid', wsid);
-  if (debugPerf) {
-    searchParams.set('debugPerf', true.toString());
-  }
-  if (additionalConnectParams) {
-    for (const k in additionalConnectParams) {
-      if (searchParams.has(k)) {
-        lc.warn?.(`skipping conflicting parameter ${k}`);
-      } else {
-        searchParams.set(k, additionalConnectParams[k]);
-      }
-    }
-  }
 
   lc.info?.('Connecting to', url.toString());
 
