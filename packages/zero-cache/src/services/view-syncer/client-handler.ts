@@ -49,6 +49,7 @@ export type DeleteRowPatch = {
 };
 
 export type RowPatch = PutRowPatch | DeleteRowPatch;
+
 export type ConfigPatch =
   | ClientPatch
   | DelQueryPatch

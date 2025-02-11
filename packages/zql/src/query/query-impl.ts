@@ -583,7 +583,6 @@ export class QueryImpl<
   TReturn = PullRow<TTable, TSchema>,
 > extends AbstractQuery<TSchema, TTable, TReturn> {
   readonly #delegate: QueryDelegate;
-  readonly #ast: AST;
   readonly #ttl: number | undefined;
 
   constructor(
@@ -596,7 +595,6 @@ export class QueryImpl<
   ) {
     super(schema, tableName, ast, ttl, format);
     this.#delegate = delegate;
-    this.#ast = ast;
     this.#ttl = ttl;
   }
 
