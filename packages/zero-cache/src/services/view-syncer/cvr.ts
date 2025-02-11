@@ -234,11 +234,14 @@ export class CVRConfigDrivenUpdater extends CVRUpdater {
     for (const id of needed) {
       const {ast, ttl} = must(queries.find(({hash}) => hash === id));
 
-      const query = this._cvr.queries[id] ?? {
+      const q: QueryRecord | undefined = this._cvr.queries[id];
+
+      const query: QueryRecord = q ?? {
         id,
         ast,
         desiredBy: {},
         ttl,
+        rowCount: 0,
       };
       assertNotInternal(query);
 

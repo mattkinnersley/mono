@@ -34,12 +34,10 @@ import {
   rowsRowToRowRecord,
 } from './schema/cvr.ts';
 import {
-  type ClientQueryRecord,
   type ClientRecord,
   cmpVersions,
   type CVRVersion,
   EMPTY_CVR_VERSION,
-  type InternalQueryRecord,
   type NullableCVRVersion,
   type QueryPatch,
   type QueryRecord,
@@ -412,14 +410,14 @@ function asQuery(row: QueriesRow): QueryRecord {
   const maybeVersion = (s: string | null) =>
     s === null ? undefined : versionFromString(s);
   return row.internal
-    ? ({
+    ? {
         id: row.queryHash,
         ast,
         transformationHash: row.transformationHash ?? undefined,
         transformationVersion: maybeVersion(row.transformationVersion),
         internal: true,
-      } satisfies InternalQueryRecord)
-    : ({
+      }
+    : {
         id: row.queryHash,
         ast,
         patchVersion: maybeVersion(row.patchVersion),
@@ -428,7 +426,8 @@ function asQuery(row: QueriesRow): QueryRecord {
         transformationVersion: maybeVersion(row.transformationVersion),
         ttl: row.ttl ?? undefined,
         expiresAt: row.expiresAt ?? undefined,
-      } satisfies ClientQueryRecord);
+        rowCount: row.rowCount,
+      };
 }
 
 // The time to wait between load attempts.
@@ -722,7 +721,7 @@ export class CVRStore {
       v ? versionString(v) : null;
 
     const change: QueriesRow = query.internal
-      ? {
+      ? ({
           clientGroupID: this.#id,
           queryHash: query.id,
           clientAST: query.ast,
@@ -735,8 +734,9 @@ export class CVRStore {
           deleted: false, // put vs del "got" query
           ttl: null,
           expiresAt: null,
-        }
-      : {
+          rowCount: 0,
+        } satisfies QueriesRow)
+      : ({
           clientGroupID: this.#id,
           queryHash: query.id,
           clientAST: query.ast,
@@ -749,7 +749,8 @@ export class CVRStore {
           deleted: false, // put vs del "got" query
           ttl: query.ttl ?? null,
           expiresAt: null,
-        };
+          rowCount: query.rowCount,
+        } satisfies QueriesRow);
     this.#writes.add({
       stats: {queries: 1},
       write: tx => tx`INSERT INTO ${this.#cvr('queries')} ${tx(change)}
@@ -768,6 +769,7 @@ export class CVRStore {
       | 'transformationHash'
       | 'transformationVersion'
       | 'deleted'
+      | 'rowCount'
     > = {
       patchVersion: query.internal
         ? null
@@ -775,6 +777,7 @@ export class CVRStore {
       transformationHash: query.transformationHash ?? null,
       transformationVersion: maybeVersionString(query.transformationVersion),
       deleted: false,
+      rowCount: query.internal ? 0 : query.rowCount,
     };
 
     this.#writes.add({

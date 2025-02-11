@@ -187,6 +187,8 @@ export class ClientHandler {
       }
     };
 
+    const deltas: Map<string, number> = new Map();
+
     const addPatch = (patchToVersion: PatchToVersion) => {
       const {patch, toVersion} = patchToVersion;
       if (cmpVersions(toVersion, this.#baseVersion) <= 0) {
@@ -218,10 +220,11 @@ export class ClientHandler {
             // TODO: Keep track of number of rows per query.
             const rowPatch = makeRowPatch(patch);
             const delta = rowPatch.op === 'put' ? 1 : -1;
+            deltas.set(hash, (deltas.get(hash) ?? 0) - 1);
             lc.debug?.(
               `row patch: ${patch.id.table} ${patch.id.rowKey} ${delta}`,
             );
-            (body.rowsPatch ??= []).push(makeRowPatch(patch));
+            (body.rowsPatch ??= []).push(rowPatch);
           }
           break;
         default:

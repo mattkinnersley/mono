@@ -193,8 +193,11 @@ export const clientQueryRecordSchema = baseQueryRecordSchema.extend({
    */
   expiresAt: v.number().optional(),
 
-  // TODO: Iron this out.
-  // rowCount: v.number(),
+  /**
+   * The number of rows in the query result. This is used to enforce size-based
+   * quotas on the server side.
+   */
+  rowCount: v.number(),
 });
 
 export type ClientQueryRecord = v.Infer<typeof clientQueryRecordSchema>;

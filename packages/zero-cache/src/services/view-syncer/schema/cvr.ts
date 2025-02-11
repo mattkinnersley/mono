@@ -67,7 +67,7 @@ CREATE TABLE ${schema(shardID)}.clients (
   "clientGroupID"      TEXT,
   "clientID"           TEXT,
   "patchVersion"       TEXT NOT NULL,  -- Version at which added or deleted
-  deleted              BOOL,           -- put vs del client patch
+  "deleted"            BOOL,           -- put vs del client patch
 
   PRIMARY KEY ("clientGroupID", "clientID"),
 
@@ -100,6 +100,7 @@ export type QueriesRow = {
   deleted: boolean | null;
   ttl: number | null;
   expiresAt: number | null;
+  rowCount: number;
 };
 
 function createQueriesTable(shardID: string) {
@@ -115,6 +116,7 @@ CREATE TABLE ${schema(shardID)}.queries (
   "deleted"               BOOL,  -- put vs del "got" query
   "ttl"                   DOUBLE PRECISION, -- NULL for no TTL
   "expiresAt"             TIMESTAMPTZ,  -- For TTL
+  "rowCount"              INTEGER NOT NULL,  -- Number of rows in the query result
 
   PRIMARY KEY ("clientGroupID", "queryHash"),
 

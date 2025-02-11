@@ -47,8 +47,8 @@ describe('view-syncer/cvr-store', () => {
     INSERT INTO cvr_sdf.instances ("clientGroupID", version, "lastActive", "replicaVersion")
       VALUES('${CVR_ID}', '03', '2024-09-04', '01');
     INSERT INTO cvr_sdf.queries ("clientGroupID", "queryHash", "clientAST", 
-                             "patchVersion", "transformationHash", "transformationVersion")
-      VALUES('${CVR_ID}', 'foo', '{"table":"issues"}', '01', 'foo-transformed', '01');
+                             "patchVersion", "transformationHash", "transformationVersion", "rowCount")
+      VALUES('${CVR_ID}', 'foo', '{"table":"issues"}', '01', 'foo-transformed', '01', 0);
     INSERT INTO cvr_sdf."rowsVersion" ("clientGroupID", version)
       VALUES('${CVR_ID}', '03');
     INSERT INTO cvr_sdf.rows ("clientGroupID", "schema", "table", "rowKey", "rowVersion", "patchVersion", "refCounts")

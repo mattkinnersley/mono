@@ -645,6 +645,7 @@ describe('view-syncer/service', () => {
           ast: USERS_QUERY,
           desiredBy: {foo: {stateVersion: '00', minorVersion: 2}},
           id: 'query-hash2',
+          rowCount: 0,
         },
       },
       version: {stateVersion: '00', minorVersion: 2},

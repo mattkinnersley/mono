@@ -161,7 +161,7 @@ describe('view-syncer/cvr', () => {
     return rows;
   }
 
-  test('load first time cvr', async () => {
+  test.only('load first time cvr', async () => {
     const pgStore = new CVRStore(
       lc,
       db,
@@ -255,6 +255,7 @@ describe('view-syncer/cvr', () => {
           deleted: false,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [
@@ -299,6 +300,7 @@ describe('view-syncer/cvr', () => {
           transformationHash: 'twoHash',
           desiredBy: {fooClient: {stateVersion: '1a9', minorVersion: 1}},
           patchVersion: {stateVersion: '1a9', minorVersion: 2},
+          rowCount: 0,
         },
       },
     } satisfies CVRSnapshot);
@@ -346,6 +348,7 @@ describe('view-syncer/cvr', () => {
           deleted: false,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [
@@ -399,6 +402,7 @@ describe('view-syncer/cvr', () => {
           transformationHash: 'twoHash',
           desiredBy: {fooClient: {stateVersion: '1a9', minorVersion: 1}},
           patchVersion: {stateVersion: '1a9', minorVersion: 2},
+          rowCount: 0,
         },
       },
     } satisfies CVRSnapshot);
@@ -567,6 +571,7 @@ describe('view-syncer/cvr', () => {
           deleted: false,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [
@@ -626,6 +631,7 @@ describe('view-syncer/cvr', () => {
             fooClient: {stateVersion: '1a9', minorVersion: 1},
           },
           patchVersion: {stateVersion: '1a9', minorVersion: 2},
+          rowCount: 0,
         },
       },
     } satisfies CVRSnapshot);
@@ -867,6 +873,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: undefined,
           desiredBy: {barClient: {stateVersion: '1aa', minorVersion: 1}},
           patchVersion: {stateVersion: '1a9', minorVersion: 2},
+          rowCount: 0,
         },
         threeHash: {
           id: 'threeHash',
@@ -875,11 +882,13 @@ describe('view-syncer/cvr', () => {
             barClient: {stateVersion: '1aa', minorVersion: 1},
             fooClient: {stateVersion: '1aa', minorVersion: 1},
           },
+          rowCount: 0,
         },
         fourHash: {
           id: 'fourHash',
           ast: {table: 'users'},
           desiredBy: {fooClient: {stateVersion: '1aa', minorVersion: 1}},
+          rowCount: 0,
         },
       },
     } satisfies CVRSnapshot);
@@ -935,6 +944,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientAST: {
@@ -966,6 +976,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientAST: {
@@ -980,6 +991,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientAST: {
@@ -994,6 +1006,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [
@@ -1125,6 +1138,7 @@ describe('view-syncer/cvr', () => {
           internal: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [
@@ -1248,6 +1262,7 @@ describe('view-syncer/cvr', () => {
           deleted: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientGroupID: 'abc123',
@@ -1260,6 +1275,7 @@ describe('view-syncer/cvr', () => {
           deleted: true, // Already in CVRs from "189"
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientGroupID: 'abc123',
@@ -1272,6 +1288,7 @@ describe('view-syncer/cvr', () => {
           deleted: true,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [
@@ -1565,6 +1582,7 @@ describe('view-syncer/cvr', () => {
           transformationHash: 'serverOneHash',
           transformationVersion: {stateVersion: '1aa', minorVersion: 1},
           patchVersion: {stateVersion: '1aa', minorVersion: 1},
+          rowCount: 0,
         },
       },
       lastActive: 1713834000000,
@@ -1615,6 +1633,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientAST: {
@@ -1629,6 +1648,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientAST: {
@@ -1643,6 +1663,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: '1aa:01',
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [
@@ -1744,6 +1765,7 @@ describe('view-syncer/cvr', () => {
           deleted: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientGroupID: 'abc123',
@@ -1756,6 +1778,7 @@ describe('view-syncer/cvr', () => {
           deleted: true, // Already in CVRs from "189"
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientGroupID: 'abc123',
@@ -1768,6 +1791,7 @@ describe('view-syncer/cvr', () => {
           deleted: true,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [
@@ -2028,6 +2052,7 @@ describe('view-syncer/cvr', () => {
           transformationHash: 'serverTwoHash',
           transformationVersion: {stateVersion: '1ba', minorVersion: 1},
           patchVersion: {stateVersion: '1aa', minorVersion: 1},
+          rowCount: 0,
         },
       },
       lastActive: 1713834000000,
@@ -2064,6 +2089,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientAST: {
@@ -2078,6 +2104,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientAST: {
@@ -2092,6 +2119,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: '1ba:01',
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [
@@ -2216,6 +2244,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientAST: {
@@ -2230,6 +2259,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientAST: {
@@ -2244,6 +2274,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: '1ba:02',
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
     });
@@ -2280,6 +2311,7 @@ describe('view-syncer/cvr', () => {
           deleted: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientGroupID: 'abc123',
@@ -2292,6 +2324,7 @@ describe('view-syncer/cvr', () => {
           deleted: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientGroupID: 'abc123',
@@ -2304,6 +2337,7 @@ describe('view-syncer/cvr', () => {
           deleted: true,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientGroupID: 'abc123',
@@ -2316,6 +2350,7 @@ describe('view-syncer/cvr', () => {
           deleted: true,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [
@@ -2642,6 +2677,7 @@ describe('view-syncer/cvr', () => {
           transformationHash: 'updatedServerOneHash',
           transformationVersion: newVersion,
           patchVersion: {stateVersion: '1aa', minorVersion: 1},
+          rowCount: 0,
         },
         twoHash: {
           id: 'twoHash',
@@ -2650,6 +2686,7 @@ describe('view-syncer/cvr', () => {
           transformationHash: 'updatedServerTwoHash',
           transformationVersion: newVersion,
           patchVersion: {stateVersion: '1aa', minorVersion: 1},
+          rowCount: 0,
         },
       },
     } satisfies CVRSnapshot);
@@ -2692,6 +2729,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientAST: {
@@ -2706,6 +2744,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientAST: {
@@ -2720,6 +2759,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: '1ba:01',
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientAST: {
@@ -2734,6 +2774,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: '1ba:01',
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [
@@ -2832,6 +2873,7 @@ describe('view-syncer/cvr', () => {
           deleted: false,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientGroupID: 'abc123',
@@ -2844,6 +2886,7 @@ describe('view-syncer/cvr', () => {
           deleted: true,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientGroupID: 'abc123',
@@ -2856,6 +2899,7 @@ describe('view-syncer/cvr', () => {
           deleted: true,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [],
@@ -3090,6 +3134,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientAST: {
@@ -3104,6 +3149,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientAST: {
@@ -3118,6 +3164,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [],
@@ -3206,6 +3253,7 @@ describe('view-syncer/cvr', () => {
           deleted: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientGroupID: 'abc123',
@@ -3218,6 +3266,7 @@ describe('view-syncer/cvr', () => {
           deleted: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientGroupID: 'abc123',
@@ -3230,6 +3279,7 @@ describe('view-syncer/cvr', () => {
           deleted: true,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
         {
           clientGroupID: 'abc123',
@@ -3242,6 +3292,7 @@ describe('view-syncer/cvr', () => {
           deleted: true,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [
@@ -3357,6 +3408,7 @@ describe('view-syncer/cvr', () => {
               "minorVersion": 1,
               "stateVersion": "1aa",
             },
+            "rowCount": 0,
             "transformationHash": "serverOneHash",
             "transformationVersion": {
               "stateVersion": "1aa",
@@ -3379,6 +3431,7 @@ describe('view-syncer/cvr', () => {
               "minorVersion": 1,
               "stateVersion": "1aa",
             },
+            "rowCount": 0,
             "transformationHash": "serverTwoHash",
             "transformationVersion": {
               "stateVersion": "1aa",
@@ -3666,6 +3719,7 @@ describe('view-syncer/cvr', () => {
           deleted: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [
@@ -3891,6 +3945,7 @@ describe('view-syncer/cvr', () => {
           transformationVersion: '1aa',
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [
@@ -3977,6 +4032,7 @@ describe('view-syncer/cvr', () => {
           deleted: null,
           expiresAt: null,
           ttl: null,
+          rowCount: 0,
         },
       ],
       desires: [
@@ -4124,6 +4180,7 @@ describe('view-syncer/cvr', () => {
           deleted: null,
           ttl: null,
           expiresAt: null,
+          rowCount: 0,
         },
       ],
       desires: [
