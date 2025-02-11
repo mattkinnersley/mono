@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test, vi} from 'vitest';
+import {beforeEach, describe, expect, test, vi, type Mock} from 'vitest';
 import type {IndexKey} from '../../../replicache/src/db/index.ts';
 import {
   makeScanResult,
@@ -14,8 +14,10 @@ import {
   type ReadTransaction,
 } from '../../../replicache/src/transactions.ts';
 import type {ReadonlyJSONValue} from '../../../shared/src/json.ts';
+import * as v from '../../../shared/src/valita.ts';
 import type {AST} from '../../../zero-protocol/src/ast.ts';
 import type {ChangeDesiredQueriesMessage} from '../../../zero-protocol/src/change-desired-queries.ts';
+import {putOpSchema} from '../../../zero-protocol/src/queries-patch.ts';
 import {schema} from '../../../zql/src/query/test/test-schemas.ts';
 import {toGotQueriesKey} from './keys.ts';
 import {QueryManager} from './query-manager.ts';
@@ -642,13 +644,6 @@ class TestTransaction implements ReadTransaction {
 }
 
 describe('getQueriesPatch', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    return () => {
-      vi.useRealTimers();
-    };
-  });
-
   test('basics', async () => {
     const send = vi.fn<(arg: ChangeDesiredQueriesMessage) => void>();
     const maxRecentQueriesSize = 0;
@@ -701,52 +696,196 @@ describe('getQueriesPatch', () => {
     expect(testReadTransaction.scanCalls).toEqual([{prefix: 'd/client1/'}]);
   });
 
-  test('takes current time into account when doing ttl', async () => {
-    vi.setSystemTime(10_000);
+  describe('add a second query with same hash', () => {
+    let send: Mock<(arg: ChangeDesiredQueriesMessage) => void>;
+    let queryManager: QueryManager;
 
-    const send = vi.fn<(arg: ChangeDesiredQueriesMessage) => void>();
-    const maxRecentQueriesSize = 0;
-    const queryManager = new QueryManager(
-      'client1',
-      schema.tables,
-      send,
-      () => () => {},
-      maxRecentQueriesSize,
-    );
+    beforeEach(() => {
+      send = vi.fn<(arg: ChangeDesiredQueriesMessage) => void>();
+      const maxRecentQueriesSize = 0;
+      queryManager = new QueryManager(
+        'client1',
+        schema.tables,
+        send,
+        () => () => {},
+        maxRecentQueriesSize,
+      );
+    });
 
-    const initialTTL = 5_000;
-    const advanceTime = 2_000;
+    async function add(ttl: number | undefined) {
+      // hash 1hydj1t7t5yv4
+      const ast: AST = {
+        table: 'issue',
+        orderBy: [['id', 'desc']],
+      };
+      queryManager.add(ast, ttl);
 
-    // hash 1hydj1t7t5yv4
-    const ast: AST = {
-      table: 'issue',
-      orderBy: [['id', 'desc']],
-    };
-    queryManager.add(ast, initialTTL);
+      const testReadTransaction = new TestTransaction();
+      testReadTransaction.scanEntries = [];
+      const patch = await queryManager.getQueriesPatch(testReadTransaction);
+      expect(testReadTransaction.scanCalls).toEqual([{prefix: 'd/client1/'}]);
+      const op = patch.get('1hydj1t7t5yv4');
+      v.assert(op, putOpSchema);
+      return op.ttl;
+    }
 
-    const testReadTransaction = new TestTransaction();
-    testReadTransaction.scanEntries = [];
-
-    vi.advanceTimersByTime(advanceTime);
-
-    const patch = await queryManager.getQueriesPatch(testReadTransaction);
-    expect(patch).toEqual(
-      new Map(
+    test('with first having a ttl', async () => {
+      expect(await add(1000)).toBe(1000);
+      expect(send).toBeCalledTimes(1);
+      expect(send.mock.calls[0]).toMatchInlineSnapshot(`
         [
-          {
-            op: 'put',
-            hash: '1hydj1t7t5yv4',
-            ast: {
-              table: 'issues',
-              orderBy: [['id', 'desc']],
-            } satisfies AST,
+          [
+            "changeDesiredQueries",
+            {
+              "desiredQueriesPatch": [
+                {
+                  "ast": {
+                    "alias": undefined,
+                    "limit": undefined,
+                    "orderBy": [
+                      [
+                        "id",
+                        "desc",
+                      ],
+                    ],
+                    "related": undefined,
+                    "schema": undefined,
+                    "start": undefined,
+                    "table": "issues",
+                    "where": undefined,
+                  },
+                  "hash": "1hydj1t7t5yv4",
+                  "op": "put",
+                  "ttl": 1000,
+                },
+              ],
+            },
+          ],
+        ]
+      `);
 
-            ttl: initialTTL - advanceTime,
-          },
-        ].map(x => [x.hash, x] as const),
-      ),
-    );
-    expect(testReadTransaction.scanCalls).toEqual([{prefix: 'd/client1/'}]);
+      send.mockClear();
+      expect(await add(2000)).toBe(2000);
+      expect(send).toBeCalledTimes(1);
+      expect(send.mock.calls[0]).toMatchInlineSnapshot(`
+        [
+          [
+            "changeDesiredQueries",
+            {
+              "desiredQueriesPatch": [
+                {
+                  "ast": {
+                    "alias": undefined,
+                    "limit": undefined,
+                    "orderBy": [
+                      [
+                        "id",
+                        "desc",
+                      ],
+                    ],
+                    "related": undefined,
+                    "schema": undefined,
+                    "start": undefined,
+                    "table": "issues",
+                    "where": undefined,
+                  },
+                  "hash": "1hydj1t7t5yv4",
+                  "op": "put",
+                  "ttl": 2000,
+                },
+              ],
+            },
+          ],
+        ]
+      `);
+
+      send.mockClear();
+      expect(await add(500)).toBe(2000);
+      expect(send).toBeCalledTimes(0);
+
+      send.mockClear();
+      expect(await add(undefined)).toBe(2000);
+      expect(send).toBeCalledTimes(0);
+    });
+
+    test('with first NOT having a ttl', async () => {
+      expect(await add(undefined)).toBe(undefined);
+      expect(send).toBeCalledTimes(1);
+      expect(send.mock.calls[0]).toMatchInlineSnapshot(`
+        [
+          [
+            "changeDesiredQueries",
+            {
+              "desiredQueriesPatch": [
+                {
+                  "ast": {
+                    "alias": undefined,
+                    "limit": undefined,
+                    "orderBy": [
+                      [
+                        "id",
+                        "desc",
+                      ],
+                    ],
+                    "related": undefined,
+                    "schema": undefined,
+                    "start": undefined,
+                    "table": "issues",
+                    "where": undefined,
+                  },
+                  "hash": "1hydj1t7t5yv4",
+                  "op": "put",
+                  "ttl": undefined,
+                },
+              ],
+            },
+          ],
+        ]
+      `);
+
+      send.mockClear();
+      expect(await add(undefined)).toBe(undefined);
+      expect(send).toBeCalledTimes(0);
+
+      send.mockClear();
+      expect(await add(1000)).toBe(1000);
+      expect(send).toBeCalledTimes(1);
+      expect(send.mock.calls[0]).toMatchInlineSnapshot(`
+        [
+          [
+            "changeDesiredQueries",
+            {
+              "desiredQueriesPatch": [
+                {
+                  "ast": {
+                    "alias": undefined,
+                    "limit": undefined,
+                    "orderBy": [
+                      [
+                        "id",
+                        "desc",
+                      ],
+                    ],
+                    "related": undefined,
+                    "schema": undefined,
+                    "start": undefined,
+                    "table": "issues",
+                    "where": undefined,
+                  },
+                  "hash": "1hydj1t7t5yv4",
+                  "op": "put",
+                  "ttl": 1000,
+                },
+              ],
+            },
+          ],
+        ]
+      `);
+
+      send.mockClear();
+      expect(await add(undefined)).toBe(1000);
+      expect(send).toBeCalledTimes(0);
+    });
   });
 
   test('getQueriesPatch includes recent queries in desired', async () => {

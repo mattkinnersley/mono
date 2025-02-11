@@ -1,7 +1,7 @@
 import * as v from '../../shared/src/valita.ts';
 import {astSchema} from './ast.ts';
 
-const putOpSchema = v.object({
+export const putOpSchema = v.object({
   op: v.literal('put'),
   hash: v.string(),
   ast: astSchema,

@@ -25,7 +25,7 @@ type QueryEntry = {
   normalized: AST;
   count: number;
   gotCallbacks: GotCallback[];
-  expiresAt: number | undefined;
+  ttl: number | undefined;
 };
 
 /**
@@ -102,7 +102,6 @@ export class QueryManager {
     tx: ReadTransaction,
     lastPatch?: Map<string, QueriesPatchOp> | undefined,
   ): Promise<Map<string, QueriesPatchOp>> {
-    const now = Date.now();
     const existingQueryHashes = new Set<string>();
     const prefix = desiredQueriesPrefixForClient(this.#clientID);
     for await (const key of tx.scan({prefix}).keys()) {
@@ -114,12 +113,8 @@ export class QueryManager {
         patch.set(hash, {op: 'del', hash});
       }
     }
-    for (const [hash, {normalized, expiresAt}] of this.#queries) {
+    for (const [hash, {normalized, ttl}] of this.#queries) {
       if (!existingQueryHashes.has(hash)) {
-        let ttl: number | undefined;
-        if (expiresAt !== undefined) {
-          ttl = expiresAt - now;
-        }
         patch.set(hash, {
           op: 'put',
           hash,
@@ -164,7 +159,7 @@ export class QueryManager {
         normalized: serverAST,
         count: 1,
         gotCallbacks: gotCallback === undefined ? [] : [gotCallback],
-        expiresAt: ttl === undefined ? undefined : Date.now() + ttl,
+        ttl,
       };
       this.#queries.set(astHash, entry);
       this.#send([
@@ -176,8 +171,22 @@ export class QueryManager {
         },
       ]);
     } else {
-      // TODO: We need to update the TTL and tell the server if it changed.
       ++entry.count;
+
+      // If the query already exists and the new ttl is larger than the old one
+      // we send a changeDesiredQueries message to the server to update the ttl.
+      if (ttl !== undefined && (entry.ttl === undefined || ttl > entry.ttl)) {
+        entry.ttl = ttl;
+        this.#send([
+          'changeDesiredQueries',
+          {
+            desiredQueriesPatch: [
+              {op: 'put', hash: astHash, ast: entry.normalized, ttl},
+            ],
+          },
+        ]);
+      }
+
       if (gotCallback) {
         entry.gotCallbacks.push(gotCallback);
       }

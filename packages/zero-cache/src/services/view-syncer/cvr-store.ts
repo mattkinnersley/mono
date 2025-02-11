@@ -283,7 +283,7 @@ class RowRecordCache {
     afterVersion: NullableCVRVersion,
     upToCVR: CVRSnapshot,
     current: CVRVersion,
-    excludeQueryHashes: string[] = [],
+    excludeQueryHashes: string[],
   ): AsyncGenerator<RowsRow[], void, undefined> {
     if (cmpVersions(afterVersion, upToCVR.version) >= 0) {
       return;
@@ -324,7 +324,7 @@ class RowRecordCache {
         return {query};
       });
 
-      yield* query.cursor(10000);
+      yield* query.cursor(10_000);
     } finally {
       reader.setDone();
     }
@@ -427,6 +427,7 @@ function asQuery(row: QueriesRow): QueryRecord {
         transformationHash: row.transformationHash ?? undefined,
         transformationVersion: maybeVersion(row.transformationVersion),
         ttl: row.ttl ?? undefined,
+        expiresAt: row.expiresAt ?? undefined,
       } satisfies ClientQueryRecord);
 }
 
@@ -614,8 +615,7 @@ export class CVRStore {
     }
 
     for (const row of queryRows) {
-      const query = asQuery(row);
-      cvr.queries[row.queryHash] = query;
+      cvr.queries[row.queryHash] = asQuery(row);
     }
 
     for (const row of desiresRows) {
