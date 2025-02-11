@@ -98,6 +98,7 @@ export type QueriesRow = {
   transformationVersion: string | null;
   internal: boolean | null;
   deleted: boolean | null;
+  ttl: number | null;
   expiresAt: number | null;
 };
 
@@ -112,6 +113,7 @@ CREATE TABLE ${schema(shardID)}.queries (
   "transformationVersion" TEXT,
   "internal"              BOOL,  -- If true, no need to track / send patches
   "deleted"               BOOL,  -- put vs del "got" query
+  "ttl"                   DOUBLE PRECISION, -- NULL for no TTL
   "expiresAt"             TIMESTAMPTZ,  -- For TTL
 
   PRIMARY KEY ("clientGroupID", "queryHash"),

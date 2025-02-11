@@ -175,13 +175,13 @@ export const clientQueryRecordSchema = baseQueryRecordSchema.extend({
   desiredBy: v.record(cvrVersionSchema),
 
   /**
-   * The time this query should expire. If absent, the query is considered to
-   * have no expiration. The expiration time is set when the query is added to
-   * the desired queries, and needs to be updated when the query is added again (max
-   * TTL).
+   * The Time To Live. If absent/undefined, the query is considered to have no
+   * expiration. The expiration time is set when the query becomes inactive and
+   * needs to be updated/reset when the query becomes active again or another
+   * query with a higher TTL is registered.
    */
-  // TODO: Make sure we update the TTL
-  expiresAt: v.number().optional(),
+  // TODO: Make sure we update the TTL as needed
+  ttl: v.number().optional(),
 
   // TODO: Iron this out.
   // rowCount: v.number(),
