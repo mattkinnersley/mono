@@ -537,7 +537,7 @@ export abstract class AbstractQuery<
 
   abstract materialize(): TypedView<HumanReadable<TReturn>>;
   abstract materialize<T>(factory: ViewFactory<TSchema, TTable, TReturn, T>): T;
-  abstract run(): HumanReadable<TReturn>;
+  abstract run(): Promise<HumanReadable<TReturn>>;
   abstract preload(): {
     cleanup: () => void;
     complete: Promise<void>;
@@ -615,11 +615,11 @@ export class QueryImpl<
     return view as T;
   }
 
-  run() {
+  run(): Promise<HumanReadable<TReturn>> {
     const v: TypedView<HumanReadable<TReturn>> = this.materialize();
     const ret = v.data;
     v.destroy();
-    return ret;
+    return Promise.resolve(ret);
   }
 
   preload(): {
