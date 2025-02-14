@@ -1509,13 +1509,11 @@ describe('view-syncer/service', () => {
     `,
     );
 
-    expect(client1.drain()).toMatchInlineSnapshot(`[]`);
-
     // TODO: How do I get ViewSyncer to "close" client2?
 
     await vs.deleteClients(SYNC_CONTEXT, [
       'deleteClients',
-      {clientIDs: ['bar']},
+      {clientIDs: ['bar', 'no-such-client']},
     ]);
 
     expect(await nextPoke(client1)).toMatchInlineSnapshot(`
@@ -1609,6 +1607,8 @@ describe('view-syncer/service', () => {
         ],
       ]
     `);
+
+    expect(client1.size()).toBe(1);
   });
 
   test('initial hydration, rows in multiple queries', async () => {
