@@ -99,7 +99,7 @@ export class Queue<T> {
    * ```ts
    * // A consumer that, when awoken, drains
    * // all entries in the queue in order to
-   * // proces them in a batch.
+   * // process them in a batch.
    * for (;;) {
    *   const value = await queue.dequeue();
    *   const rest = queue.drain();

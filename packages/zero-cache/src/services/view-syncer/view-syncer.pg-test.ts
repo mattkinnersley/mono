@@ -878,6 +878,739 @@ describe('view-syncer/service', () => {
     `);
   });
 
+  test('delete client 2', async () => {
+    const client1 = connect(SYNC_CONTEXT, [
+      {op: 'put', hash: 'query-hash1', ast: ISSUES_QUERY},
+    ]);
+
+    const client2 = connect({...SYNC_CONTEXT, clientID: 'bar', wsID: 'ws2'}, [
+      {op: 'put', hash: 'query-hash2', ast: USERS_QUERY},
+    ]);
+
+    expect(await nextPoke(client1)).toMatchInlineSnapshot(`
+      [
+        [
+          "pokeStart",
+          {
+            "baseCookie": null,
+            "cookie": "00:01",
+            "pokeID": "00:01",
+          },
+        ],
+        [
+          "pokePart",
+          {
+            "desiredQueriesPatches": {
+              "foo": [
+                {
+                  "ast": {
+                    "orderBy": [
+                      [
+                        "id",
+                        "asc",
+                      ],
+                    ],
+                    "table": "issues",
+                    "where": {
+                      "left": {
+                        "name": "id",
+                        "type": "column",
+                      },
+                      "op": "IN",
+                      "right": {
+                        "type": "literal",
+                        "value": [
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                        ],
+                      },
+                      "type": "simple",
+                    },
+                  },
+                  "hash": "query-hash1",
+                  "op": "put",
+                },
+              ],
+            },
+            "pokeID": "00:01",
+          },
+        ],
+        [
+          "pokeEnd",
+          {
+            "cookie": "00:01",
+            "pokeID": "00:01",
+          },
+        ],
+      ]
+    `);
+
+    expect(await nextPoke(client2)).toMatchInlineSnapshot(`
+      [
+        [
+          "pokeStart",
+          {
+            "baseCookie": null,
+            "cookie": "00:01",
+            "pokeID": "00:01",
+          },
+        ],
+        [
+          "pokePart",
+          {
+            "desiredQueriesPatches": {
+              "foo": [
+                {
+                  "ast": {
+                    "orderBy": [
+                      [
+                        "id",
+                        "asc",
+                      ],
+                    ],
+                    "table": "issues",
+                    "where": {
+                      "left": {
+                        "name": "id",
+                        "type": "column",
+                      },
+                      "op": "IN",
+                      "right": {
+                        "type": "literal",
+                        "value": [
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                        ],
+                      },
+                      "type": "simple",
+                    },
+                  },
+                  "hash": "query-hash1",
+                  "op": "put",
+                },
+              ],
+            },
+            "pokeID": "00:01",
+          },
+        ],
+        [
+          "pokeEnd",
+          {
+            "cookie": "00:01",
+            "pokeID": "00:01",
+          },
+        ],
+      ]
+    `);
+
+    stateChanges.push({state: 'version-ready'});
+
+    expect(await nextPoke(client1)).toMatchInlineSnapshot(`
+      [
+        [
+          "pokeStart",
+          {
+            "baseCookie": "00:01",
+            "cookie": "00:02",
+            "pokeID": "00:02",
+          },
+        ],
+        [
+          "pokePart",
+          {
+            "desiredQueriesPatches": {
+              "bar": [
+                {
+                  "ast": {
+                    "orderBy": [
+                      [
+                        "id",
+                        "asc",
+                      ],
+                    ],
+                    "table": "users",
+                  },
+                  "hash": "query-hash2",
+                  "op": "put",
+                },
+              ],
+            },
+            "pokeID": "00:02",
+          },
+        ],
+        [
+          "pokeEnd",
+          {
+            "cookie": "00:02",
+            "pokeID": "00:02",
+          },
+        ],
+      ]
+    `);
+    expect(await nextPoke(client1)).toMatchInlineSnapshot(`
+      [
+        [
+          "pokeStart",
+          {
+            "baseCookie": "00:02",
+            "cookie": "01",
+            "pokeID": "01",
+            "schemaVersions": {
+              "maxSupportedVersion": 3,
+              "minSupportedVersion": 2,
+            },
+          },
+        ],
+        [
+          "pokePart",
+          {
+            "gotQueriesPatch": [
+              {
+                "ast": {
+                  "orderBy": [
+                    [
+                      "id",
+                      "asc",
+                    ],
+                  ],
+                  "table": "issues",
+                  "where": {
+                    "left": {
+                      "name": "id",
+                      "type": "column",
+                    },
+                    "op": "IN",
+                    "right": {
+                      "type": "literal",
+                      "value": [
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                      ],
+                    },
+                    "type": "simple",
+                  },
+                },
+                "hash": "query-hash1",
+                "op": "put",
+              },
+              {
+                "ast": {
+                  "orderBy": [
+                    [
+                      "id",
+                      "asc",
+                    ],
+                  ],
+                  "table": "users",
+                },
+                "hash": "query-hash2",
+                "op": "put",
+              },
+            ],
+            "lastMutationIDChanges": {
+              "foo": 42,
+            },
+            "pokeID": "01",
+            "rowsPatch": [
+              {
+                "op": "put",
+                "tableName": "issues",
+                "value": {
+                  "big": 9007199254740991,
+                  "id": "1",
+                  "json": null,
+                  "owner": "100",
+                  "parent": null,
+                  "title": "parent issue foo",
+                },
+              },
+              {
+                "op": "put",
+                "tableName": "issues",
+                "value": {
+                  "big": -9007199254740991,
+                  "id": "2",
+                  "json": null,
+                  "owner": "101",
+                  "parent": null,
+                  "title": "parent issue bar",
+                },
+              },
+              {
+                "op": "put",
+                "tableName": "issues",
+                "value": {
+                  "big": 123,
+                  "id": "3",
+                  "json": null,
+                  "owner": "102",
+                  "parent": "1",
+                  "title": "foo",
+                },
+              },
+              {
+                "op": "put",
+                "tableName": "issues",
+                "value": {
+                  "big": 100,
+                  "id": "4",
+                  "json": null,
+                  "owner": "101",
+                  "parent": "2",
+                  "title": "bar",
+                },
+              },
+              {
+                "op": "put",
+                "tableName": "users",
+                "value": {
+                  "id": "100",
+                  "name": "Alice",
+                },
+              },
+              {
+                "op": "put",
+                "tableName": "users",
+                "value": {
+                  "id": "101",
+                  "name": "Bob",
+                },
+              },
+              {
+                "op": "put",
+                "tableName": "users",
+                "value": {
+                  "id": "102",
+                  "name": "Candice",
+                },
+              },
+            ],
+          },
+        ],
+        [
+          "pokeEnd",
+          {
+            "cookie": "01",
+            "pokeID": "01",
+          },
+        ],
+      ]
+    `);
+
+    expect(await nextPoke(client2)).toMatchInlineSnapshot(`
+      [
+        [
+          "pokeStart",
+          {
+            "baseCookie": "00:01",
+            "cookie": "00:02",
+            "pokeID": "00:02",
+          },
+        ],
+        [
+          "pokePart",
+          {
+            "desiredQueriesPatches": {
+              "bar": [
+                {
+                  "ast": {
+                    "orderBy": [
+                      [
+                        "id",
+                        "asc",
+                      ],
+                    ],
+                    "table": "users",
+                  },
+                  "hash": "query-hash2",
+                  "op": "put",
+                },
+              ],
+            },
+            "pokeID": "00:02",
+          },
+        ],
+        [
+          "pokeEnd",
+          {
+            "cookie": "00:02",
+            "pokeID": "00:02",
+          },
+        ],
+      ]
+    `);
+    expect(await nextPoke(client2)).toMatchInlineSnapshot(`
+      [
+        [
+          "pokeStart",
+          {
+            "baseCookie": "00:02",
+            "cookie": "01",
+            "pokeID": "01",
+            "schemaVersions": {
+              "maxSupportedVersion": 3,
+              "minSupportedVersion": 2,
+            },
+          },
+        ],
+        [
+          "pokePart",
+          {
+            "gotQueriesPatch": [
+              {
+                "ast": {
+                  "orderBy": [
+                    [
+                      "id",
+                      "asc",
+                    ],
+                  ],
+                  "table": "issues",
+                  "where": {
+                    "left": {
+                      "name": "id",
+                      "type": "column",
+                    },
+                    "op": "IN",
+                    "right": {
+                      "type": "literal",
+                      "value": [
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                      ],
+                    },
+                    "type": "simple",
+                  },
+                },
+                "hash": "query-hash1",
+                "op": "put",
+              },
+              {
+                "ast": {
+                  "orderBy": [
+                    [
+                      "id",
+                      "asc",
+                    ],
+                  ],
+                  "table": "users",
+                },
+                "hash": "query-hash2",
+                "op": "put",
+              },
+            ],
+            "lastMutationIDChanges": {
+              "foo": 42,
+            },
+            "pokeID": "01",
+            "rowsPatch": [
+              {
+                "op": "put",
+                "tableName": "issues",
+                "value": {
+                  "big": 9007199254740991,
+                  "id": "1",
+                  "json": null,
+                  "owner": "100",
+                  "parent": null,
+                  "title": "parent issue foo",
+                },
+              },
+              {
+                "op": "put",
+                "tableName": "issues",
+                "value": {
+                  "big": -9007199254740991,
+                  "id": "2",
+                  "json": null,
+                  "owner": "101",
+                  "parent": null,
+                  "title": "parent issue bar",
+                },
+              },
+              {
+                "op": "put",
+                "tableName": "issues",
+                "value": {
+                  "big": 123,
+                  "id": "3",
+                  "json": null,
+                  "owner": "102",
+                  "parent": "1",
+                  "title": "foo",
+                },
+              },
+              {
+                "op": "put",
+                "tableName": "issues",
+                "value": {
+                  "big": 100,
+                  "id": "4",
+                  "json": null,
+                  "owner": "101",
+                  "parent": "2",
+                  "title": "bar",
+                },
+              },
+              {
+                "op": "put",
+                "tableName": "users",
+                "value": {
+                  "id": "100",
+                  "name": "Alice",
+                },
+              },
+              {
+                "op": "put",
+                "tableName": "users",
+                "value": {
+                  "id": "101",
+                  "name": "Bob",
+                },
+              },
+              {
+                "op": "put",
+                "tableName": "users",
+                "value": {
+                  "id": "102",
+                  "name": "Candice",
+                },
+              },
+            ],
+          },
+        ],
+        [
+          "pokeEnd",
+          {
+            "cookie": "01",
+            "pokeID": "01",
+          },
+        ],
+      ]
+    `);
+
+    expect(await cvrDB`SELECT * from cvr_abc.rows`).toMatchInlineSnapshot(
+      `
+      Result [
+        {
+          "clientGroupID": "9876",
+          "patchVersion": "01",
+          "refCounts": {
+            "lmids": 1,
+          },
+          "rowKey": {
+            "clientGroupID": "9876",
+            "clientID": "foo",
+          },
+          "rowVersion": "01",
+          "schema": "",
+          "table": "zero_abc.clients",
+        },
+        {
+          "clientGroupID": "9876",
+          "patchVersion": "01",
+          "refCounts": {
+            "query-hash1": 1,
+          },
+          "rowKey": {
+            "id": "1",
+          },
+          "rowVersion": "01",
+          "schema": "",
+          "table": "issues",
+        },
+        {
+          "clientGroupID": "9876",
+          "patchVersion": "01",
+          "refCounts": {
+            "query-hash1": 1,
+          },
+          "rowKey": {
+            "id": "2",
+          },
+          "rowVersion": "01",
+          "schema": "",
+          "table": "issues",
+        },
+        {
+          "clientGroupID": "9876",
+          "patchVersion": "01",
+          "refCounts": {
+            "query-hash1": 1,
+          },
+          "rowKey": {
+            "id": "3",
+          },
+          "rowVersion": "01",
+          "schema": "",
+          "table": "issues",
+        },
+        {
+          "clientGroupID": "9876",
+          "patchVersion": "01",
+          "refCounts": {
+            "query-hash1": 1,
+          },
+          "rowKey": {
+            "id": "4",
+          },
+          "rowVersion": "01",
+          "schema": "",
+          "table": "issues",
+        },
+        {
+          "clientGroupID": "9876",
+          "patchVersion": "01",
+          "refCounts": {
+            "query-hash2": 1,
+          },
+          "rowKey": {
+            "id": "100",
+          },
+          "rowVersion": "01",
+          "schema": "",
+          "table": "users",
+        },
+        {
+          "clientGroupID": "9876",
+          "patchVersion": "01",
+          "refCounts": {
+            "query-hash2": 1,
+          },
+          "rowKey": {
+            "id": "101",
+          },
+          "rowVersion": "01",
+          "schema": "",
+          "table": "users",
+        },
+        {
+          "clientGroupID": "9876",
+          "patchVersion": "01",
+          "refCounts": {
+            "query-hash2": 1,
+          },
+          "rowKey": {
+            "id": "102",
+          },
+          "rowVersion": "01",
+          "schema": "",
+          "table": "users",
+        },
+      ]
+    `,
+    );
+
+    expect(client1.drain()).toMatchInlineSnapshot(`[]`);
+
+    // TODO: How do I get ViewSyncer to "close" client2?
+
+    await vs.deleteClients(SYNC_CONTEXT, [
+      'deleteClients',
+      {clientIDs: ['bar']},
+    ]);
+
+    expect(await nextPoke(client1)).toMatchInlineSnapshot(`
+      [
+        [
+          "pokeStart",
+          {
+            "baseCookie": "01",
+            "cookie": "01:01",
+            "pokeID": "01:01",
+          },
+        ],
+        [
+          "pokePart",
+          {
+            "desiredQueriesPatches": {
+              "bar": [
+                {
+                  "hash": "query-hash2",
+                  "op": "del",
+                },
+              ],
+            },
+            "pokeID": "01:01",
+          },
+        ],
+        [
+          "pokeEnd",
+          {
+            "cookie": "01:01",
+            "pokeID": "01:01",
+          },
+        ],
+      ]
+    `);
+    expect(await nextPoke(client1)).toMatchInlineSnapshot(`
+      [
+        [
+          "pokeStart",
+          {
+            "baseCookie": "01:01",
+            "cookie": "01:02",
+            "pokeID": "01:02",
+            "schemaVersions": {
+              "maxSupportedVersion": 3,
+              "minSupportedVersion": 2,
+            },
+          },
+        ],
+        [
+          "pokePart",
+          {
+            "gotQueriesPatch": [
+              {
+                "hash": "query-hash2",
+                "op": "del",
+              },
+            ],
+            "pokeID": "01:02",
+            "rowsPatch": [
+              {
+                "id": {
+                  "id": "100",
+                },
+                "op": "del",
+                "tableName": "users",
+              },
+              {
+                "id": {
+                  "id": "101",
+                },
+                "op": "del",
+                "tableName": "users",
+              },
+              {
+                "id": {
+                  "id": "102",
+                },
+                "op": "del",
+                "tableName": "users",
+              },
+            ],
+          },
+        ],
+        [
+          "pokeEnd",
+          {
+            "cookie": "01:02",
+            "pokeID": "01:02",
+          },
+        ],
+      ]
+    `);
+  });
+
   test('initial hydration, rows in multiple queries', async () => {
     const client = connect(SYNC_CONTEXT, [
       {op: 'put', hash: 'query-hash1', ast: ISSUES_QUERY},

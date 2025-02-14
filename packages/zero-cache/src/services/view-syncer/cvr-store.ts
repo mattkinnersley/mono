@@ -788,6 +788,19 @@ export class CVRStore {
     });
   }
 
+  delClient(clientID: string) {
+    this.#writes.add({
+      stats: {desires: 1},
+      write: tx => tx`DELETE FROM ${this.#cvr('desires')}
+        WHERE "clientGroupID" = ${this.#id} AND "clientID" = ${clientID}`,
+    });
+    this.#writes.add({
+      stats: {clients: 1},
+      write: tx => tx`DELETE FROM ${this.#cvr('clients')}
+        WHERE "clientGroupID" = ${this.#id} AND "clientID" = ${clientID}`,
+    });
+  }
+
   insertDesiredQuery(
     newVersion: CVRVersion,
     query: {id: string},
